@@ -1,11 +1,18 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num_traits::{real::Real, Zero, One};
+use num_traits::{real::Real, One, Zero};
 
+pub trait HasCoordinates<T: Real> {
+    fn get_coords(&self) -> (T, T, T, T);
 
-pub trait HasCoordinates {
-    fn get_coords(&self) -> (f32, f32, f32);
-    fn get_usize_coord(&self) -> (usize, usize, usize);
+    fn get_usize_coord(&self) -> (usize, usize, usize) {
+        let (x, y, z, _) = self.get_coords();
+        (
+            x.to_usize().unwrap(),
+            y.to_usize().unwrap(),
+            z.to_usize().unwrap(),
+        )
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -18,7 +25,12 @@ pub struct Vector<T: Real> {
 
 impl<T: Real> Vector<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
-        Self { x, y, z, w: Zero::zero() }
+        Self {
+            x,
+            y,
+            z,
+            w: Zero::zero(),
+        }
     }
 
     pub fn length(self) -> T {
@@ -46,7 +58,7 @@ impl<T: Real> Vector<T> {
     }
 }
 
-impl<T:Real> Add for Vector<T> {
+impl<T: Real> Add for Vector<T> {
     type Output = Vector<T>;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -62,7 +74,7 @@ impl<T: Real> Sub for Vector<T> {
     }
 }
 
-impl<T: Real> Neg for Vector<T>{
+impl<T: Real> Neg for Vector<T> {
     type Output = Vector<T>;
 
     fn neg(self) -> Self::Output {
@@ -86,6 +98,11 @@ impl<T: Real> Mul<T> for Vector<T> {
     }
 }
 
+impl<T:Real> HasCoordinates<T>  for Vector<T>{
+    fn get_coords(&self) -> (T, T, T, T) {
+        (self.x, self.y, self.z, self.w)
+    }
+}
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Point<T: Real> {
@@ -97,7 +114,12 @@ pub struct Point<T: Real> {
 
 impl<T: Real> Point<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
-        Self { x, y, z, w: One::one() }
+        Self {
+            x,
+            y,
+            z,
+            w: One::one(),
+        }
     }
 
     #[allow(dead_code)]
@@ -139,7 +161,11 @@ impl<T: Real> Sub<Vector<T>> for Point<T> {
     }
 }
 
-
+impl<T:Real> HasCoordinates<T>  for Point<T>{
+    fn get_coords(&self) -> (T, T, T, T) {
+        (self.x, self.y, self.z, self.w)
+    }
+} 
 
 #[cfg(test)]
 mod tests {

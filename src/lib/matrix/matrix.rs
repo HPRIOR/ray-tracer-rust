@@ -46,6 +46,27 @@ where
     }
 }
 
+impl<T> Mul<(T, T, T, T)> for Matrix<T>
+where
+    T: Num + Copy + Clone,
+{
+    type Output = (T, T, T, T);
+
+    fn mul(self, rhs: (T, T, T, T)) -> (T, T, T, T) {
+
+        fn muliply_row<T: Num + Copy + Clone>(row: &Vec<T>, tuple: (T, T, T, T)) -> T {
+            row[0] * tuple.0 + row[1] * tuple.1 + row[2] * tuple.2 + row[3] * tuple.3
+        }
+
+        (
+            muliply_row(&self.matrix[0], rhs),
+            muliply_row(&self.matrix[1], rhs),
+            muliply_row(&self.matrix[2], rhs),
+            muliply_row(&self.matrix[3], rhs),
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Matrix;
@@ -131,5 +152,19 @@ mod tests {
     }
 
     #[test]
-    fn matrix_can_be_multiplied_by_tuple() {}
+    fn matrix_can_be_multiplied_by_tuple() {
+        let matrix: Matrix<i8> = Matrix::new(vec![
+            vec![1, 2, 3, 4],
+            vec![2, 4, 4, 2],
+            vec![8, 6, 4, 1],
+            vec![0, 0, 0, 1],
+        ]);
+
+        let tuple = (1, 2, 3, 1);
+
+        let sut = matrix * tuple;
+
+        let expected = (18, 24, 33, 1);
+        assert_eq!(sut, expected);
+    }
 }
