@@ -1,6 +1,7 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use num_traits::Num;
+use num_traits::{real::Real, Zero, One};
+
 
 pub trait HasCoordinates {
     fn get_coords(&self) -> (f32, f32, f32);
@@ -8,23 +9,23 @@ pub trait HasCoordinates {
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct Vector {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-    w: f32,
+pub struct Vector<T: Real> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
+    w: T,
 }
 
-impl Vector {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
-        Self { x, y, z, w: 0.0 }
+impl<T: Real> Vector<T> {
+    pub fn new(x: T, y: T, z: T) -> Self {
+        Self { x, y, z, w: Zero::zero() }
     }
 
-    pub fn length(self) -> f32 {
+    pub fn length(self) -> T {
         ((self.x * self.x) + (self.y * self.y) + (self.z * self.z)).sqrt()
     }
 
-    pub fn norm(self) -> Vector {
+    pub fn norm(self) -> Vector<T> {
         Vector::new(
             self.x / self.length(),
             self.y / self.length(),
@@ -32,11 +33,11 @@ impl Vector {
         )
     }
 
-    pub fn dot(self, other: Vector) -> f32 {
+    pub fn dot(self, other: Vector<T>) -> T {
         (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
     }
 
-    pub fn cross_prod(self, other: Vector) -> Vector {
+    pub fn cross_prod(self, other: Vector<T>) -> Vector<T> {
         Vector::new(
             (self.y * other.z) - (self.z * other.y),
             (self.z * other.x) - (self.x * other.z),
@@ -45,67 +46,67 @@ impl Vector {
     }
 }
 
-impl Add for Vector {
-    type Output = Vector;
+impl<T:Real> Add for Vector<T> {
+    type Output = Vector<T>;
 
     fn add(self, rhs: Self) -> Self::Output {
         Vector::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
     }
 }
 
-impl Sub for Vector {
-    type Output = Vector;
+impl<T: Real> Sub for Vector<T> {
+    type Output = Vector<T>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Vector::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
     }
 }
 
-impl Neg for Vector{
-    type Output = Vector;
+impl<T: Real> Neg for Vector<T>{
+    type Output = Vector<T>;
 
     fn neg(self) -> Self::Output {
-        Vector::new(0.0 - self.x, 0.0 - self.y, 0.0 - self.z)
+        Vector::new(self.x.neg(), self.y.neg(), self.z.neg())
     }
 }
 
-impl Div<f32> for Vector {
-    type Output = Vector;
+impl<T: Real> Div<T> for Vector<T> {
+    type Output = Vector<T>;
 
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: T) -> Self::Output {
         Vector::new(self.x / rhs, self.y / rhs, self.z / rhs)
     }
 }
 
-impl Mul<f32> for Vector {
-    type Output = Vector;
+impl<T: Real> Mul<T> for Vector<T> {
+    type Output = Vector<T>;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: T) -> Self::Output {
         Vector::new(self.x * rhs, self.y * rhs, self.z * rhs)
     }
 }
 
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct Point {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-    w: f32,
+pub struct Point<T: Real> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
+    w: T,
 }
 
-impl Point {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
-        Self { x, y, z, w: 1.0 }
+impl<T: Real> Point<T> {
+    pub fn new(x: T, y: T, z: T) -> Self {
+        Self { x, y, z, w: One::one() }
     }
 
     #[allow(dead_code)]
-    fn length(self) -> f32 {
+    fn length(self) -> T {
         ((self.x * self.x) + (self.y * self.y) + (self.z * self.z)).sqrt()
     }
 
     #[allow(dead_code)]
-    fn norm(self) -> Vector {
+    fn norm(self) -> Vector<T> {
         Vector::new(
             self.x / self.length(),
             self.y / self.length(),
@@ -114,26 +115,26 @@ impl Point {
     }
 }
 
-impl Add<Vector> for Point {
-    type Output = Point;
+impl<T: Real> Add<Vector<T>> for Point<T> {
+    type Output = Point<T>;
 
-    fn add(self, rhs: Vector) -> Self::Output {
+    fn add(self, rhs: Vector<T>) -> Self::Output {
         Point::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
     }
 }
 
-impl Sub for Point {
-    type Output = Vector;
+impl<T: Real> Sub for Point<T> {
+    type Output = Vector<T>;
 
-    fn sub(self, rhs: Point) -> Self::Output {
+    fn sub(self, rhs: Point<T>) -> Self::Output {
         Vector::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
     }
 }
 
-impl Sub<Vector> for Point {
-    type Output = Point;
+impl<T: Real> Sub<Vector<T>> for Point<T> {
+    type Output = Point<T>;
 
-    fn sub(self, rhs: Vector) -> Self::Output {
+    fn sub(self, rhs: Vector<T>) -> Self::Output {
         Point::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
     }
 }
@@ -256,7 +257,7 @@ mod tests {
 
     #[test]
     fn complex_normalisation_is_correct() {
-        let v1 = Vector::new(1.0, 2.0, 3.0);
+        let v1 = Vector::new(1.0_f32, 2.0_f32, 3.0_f32);
         let result = v1.norm();
         assert_eq!(result, Vector::new(0.26726124, 0.5345225, 0.8017837))
     }

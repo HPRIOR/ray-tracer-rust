@@ -2,14 +2,14 @@ use crate::geometry::vector::{Point, Vector};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Projectile {
-    pub position: Point,
-    pub velocity: Vector,
+    pub position: Point<f32>,
+    pub velocity: Vector<f32>,
 }
 
 #[derive(Clone, Copy)]
 pub struct Env {
-    pub gravity: Vector,
-    pub wind: Vector,
+    pub gravity: Vector<f32>,
+    pub wind: Vector<f32>,
 }
 
 /*

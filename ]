@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn complex_normalisation_is_correct() {
-        let v1 = Vector::new(1.0, 2.0, 3.0);
+        let v1 = Vector<f32>::new(1.0, 2.0, 3.0);
         let result = v1.norm();
         assert_eq!(result, Vector::new(0.26726124, 0.5345225, 0.8017837))
     }
