@@ -155,8 +155,6 @@ mod tests {
 
     #[test]
     fn minus_one_can_be_comared(){
-        let a = -1;
-        let b = -1; 
         compare(-1.0, -1.0, 5);
     }
 }
