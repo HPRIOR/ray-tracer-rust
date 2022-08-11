@@ -4,6 +4,7 @@ pub mod colour;
 pub mod canvas;
 pub mod matrix;
 pub mod utils;
+pub mod ray;
 
 pub fn lib_entry(){
     
