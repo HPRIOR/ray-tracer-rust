@@ -1,12 +1,14 @@
 use num_traits::{One, Zero, real::Real};
 
+pub type Tup<T> = (T, T, T, T);
+
 // point = 1
 // vector = 0
-pub fn point<T: Real>(x: T, y: T, z: T) -> (T, T, T, T) {
+pub fn point<T: Real>(x: T, y: T, z: T) -> Tup<T> {
     (x, y, z, One::one())
 }
 
-pub fn vector<T: Real>(x: T, y: T, z: T) -> (T, T, T, T) {
+pub fn vector<T: Real>(x: T, y: T, z: T) -> Tup<T> {
     (x, y, z, Zero::zero())
 }
 
@@ -40,8 +42,8 @@ impl<T: Real> Square<T> for T {
     }
 }
 
-impl<T: Real> Vector<T> for (T, T, T, T) {
-    type Output = (T, T, T, T);
+impl<T: Real> Vector<T> for Tup<T> {
+    type Output = Tup<T>;
 
     fn length(self) -> T {
         (self.0.squared() + self.1.squared() + self.2.squared()).sqrt()
@@ -82,8 +84,8 @@ impl<T: Real> Vector<T> for (T, T, T, T) {
     }
 }
 
-impl<T: Real> Operations<T> for (T, T, T, T) {
-    type Output = (T, T, T, T);
+impl<T: Real> Operations<T> for Tup<T> {
+    type Output = Tup<T>;
 
     fn add(self, rhs: Self::Output) -> Self::Output {
         (

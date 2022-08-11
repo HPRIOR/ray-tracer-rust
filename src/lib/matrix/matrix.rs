@@ -1,6 +1,10 @@
+#![allow(dead_code)]
+
 use std::fmt::Display;
 
 use num_traits::{real::Real, One, Zero};
+
+use crate::geometry::vector::Tup;
 
 type MatrixVec<T> = Vec<Vec<T>>;
 
@@ -9,7 +13,7 @@ pub struct Matrix<T> {
     matrix: MatrixVec<T>,
 }
 
-enum Axis {
+pub enum Axis {
     X,
     Y,
     Z,
@@ -20,7 +24,7 @@ impl<T: Real + Clone + Copy + Display> Matrix<T> {
         Self { matrix }
     }
 
-    fn ident() -> Self {
+    pub fn ident() -> Self {
         Self {
             matrix: vec![
                 vec![One::one(), Zero::zero(), Zero::zero(), Zero::zero()],
@@ -42,6 +46,10 @@ impl<T: Real + Clone + Copy + Display> Matrix<T> {
         }
     }
 
+    pub fn scale(&self, x: T, y: T, z: T) -> Self {
+        Matrix::scaling(x, y, z).mul(&self)
+    }
+
     fn translation(x: T, y: T, z: T) -> Self {
         Self {
             matrix: vec![
@@ -51,6 +59,10 @@ impl<T: Real + Clone + Copy + Display> Matrix<T> {
                 vec![Zero::zero(), Zero::zero(), Zero::zero(), One::one()],
             ],
         }
+    }
+
+    pub fn translate(&self, x: T, y: T, z: T) -> Self {
+        Matrix::translation(x, y, z).mul(&self)
     }
 
     fn get(&self, row: usize, col: usize) -> T {
@@ -158,8 +170,8 @@ impl<T: Real + Clone + Copy + Display> Matrix<T> {
         )
     }
 
-    fn mul_tup(&self, rhs: (T, T, T, T)) -> (T, T, T, T) {
-        fn muliply_row<T>(row: &Vec<T>, tuple: (T, T, T, T)) -> T
+    pub fn mul_tup(&self, rhs: Tup<T>) -> Tup<T> {
+        fn muliply_row<T>(row: &Vec<T>, tuple: Tup<T>) -> T
         where
             T: Real + Copy + Clone,
         {
@@ -174,7 +186,7 @@ impl<T: Real + Clone + Copy + Display> Matrix<T> {
         )
     }
 
-    fn rotate(around: Axis, radians: T) -> Self {
+    fn rotation(around: Axis, radians: T) -> Self {
         match around {
             Axis::X => Self {
                 matrix: vec![
@@ -202,12 +214,31 @@ impl<T: Real + Clone + Copy + Display> Matrix<T> {
             },
         }
     }
+
+    pub fn rotate(&self, around: Axis, radians: T) -> Self {
+        Matrix::rotation(around, radians).mul(&self)
+    }
+
+    fn shearing(xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Self {
+        Self {
+            matrix: vec![
+                vec![One::one(), xy, xz, Zero::zero()],
+                vec![yx, One::one(), yz, Zero::zero()],
+                vec![zx, zy, One::one(), Zero::zero()],
+                vec![Zero::zero(), Zero::zero(), Zero::zero(), One::one()],
+            ],
+        }
+    }
+
+    pub fn shear(&self, xy: T, xz: T, yx: T, yz: T, zx: T, zy: T) -> Self {
+        Matrix::shearing(xy, xz, yx, yz, zx, zy).mul(&self)
+    }
 }
 
 #[cfg(test)]
 mod tests {
 
-    use std::{f64::consts::PI, ops::Div};
+    use std::f64::consts::PI;
 
     use float_cmp::approx_eq;
     use num_traits::Float;
@@ -578,8 +609,8 @@ mod tests {
     #[test]
     fn point_can_rotate_around_x_axis() {
         let p1: (f64, f64, f64, f64) = point(0.0, 1.0, 0.0);
-        let half_quarter = Matrix::rotate(Axis::X, PI / 4.0);
-        let full_quarter = Matrix::rotate(Axis::X, PI / 2.0);
+        let half_quarter = Matrix::rotation(Axis::X, PI / 4.0);
+        let full_quarter = Matrix::rotation(Axis::X, PI / 2.0);
         let sut_half = half_quarter.mul_tup(p1);
         let sut_full = full_quarter.mul_tup(p1);
 
@@ -590,7 +621,7 @@ mod tests {
     #[test]
     fn rotation_is_reversed_with_inverse_of_matrix() {
         let p1 = point(0.0, 1.0, 0.0);
-        let half_quarter = Matrix::rotate(Axis::X, PI / 4.0).inverse().unwrap();
+        let half_quarter = Matrix::rotation(Axis::X, PI / 4.0).inverse().unwrap();
         let sut_half = half_quarter.mul_tup(p1);
         tup_approx_eq(
             sut_half,
@@ -602,8 +633,8 @@ mod tests {
     #[test]
     fn point_can_rotate_around_y_axis() {
         let p1: (f64, f64, f64, f64) = point(0.0, 0.0, 1.0);
-        let half_quarter = Matrix::rotate(Axis::Y, PI / 4.0);
-        let full_quarter = Matrix::rotate(Axis::Y, PI / 2.0);
+        let half_quarter = Matrix::rotation(Axis::Y, PI / 4.0);
+        let full_quarter = Matrix::rotation(Axis::Y, PI / 2.0);
         let sut_half = half_quarter.mul_tup(p1);
         let sut_full = full_quarter.mul_tup(p1);
 
@@ -614,15 +645,111 @@ mod tests {
     #[test]
     fn point_can_rotate_around_z_axis() {
         let p1: (f64, f64, f64, f64) = point(0.0, 1.0, 0.0);
-        let half_quarter = Matrix::rotate(Axis::Z, PI / 4.0);
-        let full_quarter = Matrix::rotate(Axis::Z, PI / 2.0);
+        let half_quarter = Matrix::rotation(Axis::Z, PI / 4.0);
+        let full_quarter = Matrix::rotation(Axis::Z, PI / 2.0);
         let sut_half = half_quarter.mul_tup(p1);
         let sut_full = full_quarter.mul_tup(p1);
 
         println!("{:?}", sut_half);
         println!("{:?}", sut_full);
 
-        tup_approx_eq(sut_half, point(-(2.0.sqrt() / 2.0),  2.0.sqrt() / 2.0, 0.0), 5);
+        tup_approx_eq(
+            sut_half,
+            point(-(2.0.sqrt() / 2.0), 2.0.sqrt() / 2.0, 0.0),
+            5,
+        );
         tup_approx_eq(sut_full, point(-1.0, 0.0, 0.0), 5);
+    }
+
+    #[test]
+    fn shearing_transormation_moves_x_in_proportion_to_y() {
+        let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
+        let shearing_trans = Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let sut = shearing_trans.mul_tup(p1);
+        let expected = point(5.0, 3.0, 4.0);
+        assert_eq!(sut, expected);
+    }
+
+    #[test]
+    fn shearing_transormation_moves_x_in_proportion_to_z() {
+        let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
+        let shearing_trans = Matrix::shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
+        let sut = shearing_trans.mul_tup(p1);
+        let expected = point(6.0, 3.0, 4.0);
+        assert_eq!(sut, expected);
+    }
+
+    #[test]
+    fn shearing_transormation_moves_y_in_proportion_to_x() {
+        let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
+        let shearing_trans = Matrix::shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        let sut = shearing_trans.mul_tup(p1);
+        let expected = point(2.0, 5.0, 4.0);
+        assert_eq!(sut, expected);
+    }
+
+    #[test]
+    fn shearing_transormation_moves_y_in_proportion_to_z() {
+        let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
+        let shearing_trans = Matrix::shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let sut = shearing_trans.mul_tup(p1);
+        let expected = point(2.0, 7.0, 4.0);
+        assert_eq!(sut, expected);
+    }
+
+    #[test]
+    fn shearing_transormation_moves_z_in_proportion_to_x() {
+        let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
+        let shearing_trans = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        let sut = shearing_trans.mul_tup(p1);
+        let expected = point(2.0, 3.0, 6.0);
+        assert_eq!(sut, expected);
+    }
+
+    #[test]
+    fn shearing_transormation_moves_z_in_proportion_to_y() {
+        let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
+        let shearing_trans = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+        let sut = shearing_trans.mul_tup(p1);
+        let expected = point(2.0, 3.0, 7.0);
+        assert_eq!(sut, expected);
+    }
+
+    #[test]
+    fn individual_transformations_are_applied_in_sequence() {
+        let p1 = point(1.0, 0.0, 1.0);
+        let a = Matrix::rotation(Axis::X, PI / 2.0);
+        let b = Matrix::scaling(5.0, 5.0, 5.0);
+        let c = Matrix::translation(10.0, 5.0, 7.0);
+
+        let p2 = a.mul_tup(p1);
+        tup_approx_eq(p2, point(1.0, -1.0, 0.0), 5);
+
+        let p3 = b.mul_tup(p2);
+        tup_approx_eq(p3, point(5.0, -5.0, 0.0), 5);
+
+        let p4 = c.mul_tup(p3);
+        tup_approx_eq(p4, point(15.0, 0.0, 7.0), 5)
+    }
+
+    #[test]
+    fn chained_transformations_are_applied_in_reverse_order() {
+        let p1 = point(1.0, 0.0, 1.0);
+        let a = Matrix::rotation(Axis::X, PI / 2.0);
+        let b = Matrix::scaling(5.0, 5.0, 5.0);
+        let c = Matrix::translation(10.0, 5.0, 7.0);
+        let expected = c.mul_tup(b.mul_tup(a.mul_tup(p1)));
+        tup_approx_eq(expected, point(15.0, 0.0, 7.0), 5)
+    }
+
+    #[test]
+    fn fluid_interface_can_be_used_to_create_transform() {
+        let p1 = point(1.0, 0.0, 1.0);
+        let transform = Matrix::ident()
+            .rotate(Axis::X, PI / 2.0)
+            .scale(5.0, 5.0, 5.0)
+            .translate(10.0, 5.0, 7.0);
+        let expected = transform.mul_tup(p1);
+        tup_approx_eq(expected, point(15.0, 0.0, 7.0), 5)
     }
 }
