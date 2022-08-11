@@ -5,6 +5,7 @@ pub mod canvas;
 pub mod matrix;
 pub mod utils;
 pub mod ray;
+pub mod shapes;
 
 pub fn lib_entry(){
     
