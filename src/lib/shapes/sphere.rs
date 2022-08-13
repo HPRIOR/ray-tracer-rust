@@ -5,7 +5,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { id: Uuid::new_v4() }
     }
 }
