@@ -12,7 +12,7 @@ impl ToU32 for char {
     }
 }
 
-trait ApproxEq {
+pub trait ApproxEq {
     type Type;
 
     fn approx_eq(self, other: Self::Type);
@@ -39,7 +39,7 @@ fn compare(a: f64, b: f64) -> Result<(), String> {
     }
 }
 
-pub fn tup_approx_eq(a: Tup, b: Tup) {
+fn tup_approx_eq(a: Tup, b: Tup) {
     let compare_list = vec![
         compare(a.0, b.0),
         compare(a.1, b.1),
