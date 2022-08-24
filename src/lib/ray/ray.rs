@@ -1,30 +1,29 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_variables)]
 
-use num_traits::{real::Real, Zero, One};
 
 use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
     shapes::sphere::Sphere,
 };
 
-pub struct Ray<T: Real> {
-    origin: Tup<T>,
-    direction: Tup<T>,
+pub struct Ray {
+    origin: Tup,
+    direction: Tup
 }
 
-impl<T: Real> Ray<T> {
-    pub fn new(origin: Tup<T>, direction: Tup<T>) -> Self {
+impl Ray {
+    pub fn new(origin: Tup, direction: Tup) -> Self {
         Self { origin, direction }
     }
 
-    fn position(&self, t: T) -> Tup<T> {
+    fn position(&self, t: f64) -> Tup {
         self.direction.mul(t).add(self.origin)
     }
 
-    fn intersect(&self, sphere: Sphere) -> Vec<T> {
-        let sphere_to_ray = self.origin.sub(point(Zero::zero(), Zero::zero(), Zero::zero()));
+    fn intersect(&self, sphere: Sphere) -> Vec<f64> {
+        let sphere_to_ray = self.origin.sub(point(0.0, 0.0, 0.0));
         let a = self.direction.dot(self.direction);
-        let b = (self.direction.dot(sphere_to_ray)).mul(2.0);
+        let b = (self.direction.dot(sphere_to_ray)) * 2.0;
         vec![]
     }
 }

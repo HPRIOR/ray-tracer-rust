@@ -1,51 +1,50 @@
-use num_traits::{One, Zero, real::Real};
 
-pub type Tup<T> = (T, T, T, T);
+pub type Tup = (f64, f64, f64, f64);
 
 // point = 1
+pub fn point(x: f64, y: f64, z: f64) -> Tup {
+    (x, y, z, 1.0)
+}
+
 // vector = 0
-pub fn point<T: Real>(x: T, y: T, z: T) -> Tup<T> {
-    (x, y, z, One::one())
+pub fn vector(x: f64, y: f64, z: f64) -> Tup {
+    (x, y, z, 0.0)
 }
 
-pub fn vector<T: Real>(x: T, y: T, z: T) -> Tup<T> {
-    (x, y, z, Zero::zero())
-}
-
-pub trait Vector<T: Real> {
+pub trait Vector {
     type Output;
-    fn length(self) -> T;
+    fn length(self) -> f64;
     fn norm(self) -> Self::Output;
-    fn dot(self, other: Self::Output) -> T;
+    fn dot(self, other: Self::Output) -> f64;
     fn cross_prod(self, other: Self::Output) -> Self::Output;
-    fn x(self) -> T;
-    fn y(self) -> T;
-    fn z(self) -> T;
+    fn x(self) -> f64;
+    fn y(self) -> f64;
+    fn z(self) -> f64;
 }
 
-pub trait Operations<T: Real> {
+pub trait Operations {
     type Output;
     fn add(self, rhs: Self::Output) -> Self::Output;
     fn sub(self, rhs: Self::Output) -> Self::Output;
-    fn mul(self, rhs: T) -> Self::Output;
-    fn div(self, rhs: T) -> Self::Output;
+    fn mul(self, rhs: f64) -> Self::Output;
+    fn div(self, rhs: f64) -> Self::Output;
     fn neg(self) -> Self::Output;
 }
 
-trait Square<T> {
-    fn squared(self) -> T;
+trait Square {
+    fn squared(self) -> f64;
 }
 
-impl<T: Real> Square<T> for T {
-    fn squared(self) -> T {
+impl Square for f64 {
+    fn squared(self) -> f64 {
         self * self
     }
 }
 
-impl<T: Real> Vector<T> for Tup<T> {
-    type Output = Tup<T>;
+impl Vector for Tup {
+    type Output = Tup;
 
-    fn length(self) -> T {
+    fn length(self) -> f64 {
         (self.0.squared() + self.1.squared() + self.2.squared()).sqrt()
     }
 
@@ -58,7 +57,7 @@ impl<T: Real> Vector<T> for Tup<T> {
         )
     }
 
-    fn dot(self, other: Self::Output) -> T {
+    fn dot(self, other: Self::Output) -> f64 {
         (self.0 * other.0) + (self.1 * other.1) + (self.2 * other.2) + (self.3 * self.3)
     }
 
@@ -67,25 +66,25 @@ impl<T: Real> Vector<T> for Tup<T> {
             (self.1 * other.2) - (self.2 * other.1),
             (self.2 * other.0) - (self.0 * other.2),
             (self.0 * other.1) - (self.1 * other.0),
-            Zero::zero(),
+            0.0,
         )
     }
 
-    fn x(self) -> T {
+    fn x(self) -> f64 {
         self.0
     }
 
-    fn y(self) -> T {
+    fn y(self) -> f64 {
         self.1
     }
 
-    fn z(self) -> T {
+    fn z(self) -> f64 {
         self.2
     }
 }
 
-impl<T: Real> Operations<T> for Tup<T> {
-    type Output = Tup<T>;
+impl Operations for Tup {
+    type Output = Tup;
 
     fn add(self, rhs: Self::Output) -> Self::Output {
         (
@@ -105,23 +104,23 @@ impl<T: Real> Operations<T> for Tup<T> {
         )
     }
 
-    fn mul(self, rhs: T) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         (self.0 * rhs, self.1 * rhs, self.2 * rhs, self.3 * rhs)
     }
 
-    fn div(self, rhs: T) -> Self::Output {
+    fn div(self, rhs: f64) -> Self::Output {
         (self.0 / rhs, self.1 / rhs, self.2 / rhs, self.3 / rhs)
     }
 
     fn neg(self) -> Self::Output {
-        (self.0.neg(), self.1.neg(), self.2.neg(), self.3.neg())
+        (-self.0, -self.1, -self.2, -self.3)
     }
 }
 
 #[cfg(test)]
 mod tests {
 
-    use super::{Operations, Vector, vector, point};
+    use super::{point, vector, Operations, Vector};
 
     #[test]
     fn vector_and_point_add_to_point() {
@@ -216,14 +215,14 @@ mod tests {
     fn vector_one_two_three_will_have_sqrt_14_magnitute() {
         let v1 = vector(1.0, 2.0, 3.0);
         let result = v1.length();
-        assert_eq!(14.0_f32.sqrt(), result)
+        assert_eq!(14.0_f64.sqrt(), result)
     }
 
     #[test]
     fn negative_vector_will_have_correct_magnitute() {
         let v1 = vector(-1.0, -2.0, -3.0);
         let result = v1.length();
-        assert_eq!(14.0_f32.sqrt(), result)
+        assert_eq!(14.0_f64.sqrt(), result)
     }
 
     #[test]
@@ -235,9 +234,9 @@ mod tests {
 
     #[test]
     fn complex_normalisation_is_correct() {
-        let v1 = vector(1.0_f32, 2.0_f32, 3.0_f32);
+        let v1 = vector(1.0_f64, 2.0_f64, 3.0_f64);
         let result = v1.norm();
-        assert_eq!(result, (0.26726124, 0.5345225, 0.8017837, 0.0))
+        assert_eq!(result, (0.2672612419124244, 0.5345224838248488, 0.8017837257372732, 0.0))
     }
 
     #[test]

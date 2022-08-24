@@ -3,14 +3,14 @@ use crate::geometry::vector::Operations;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Projectile {
-    pub position: (f32, f32, f32, f32),
-    pub velocity: (f32,f32,f32,f32),
+    pub position: (f64, f64, f64, f64),
+    pub velocity: (f64,f64,f64,f64),
 }
 
 #[derive(Clone, Copy)]
 pub struct Env {
-    pub gravity: (f32, f32,f32,f32),
-    pub wind: (f32,f32,f32,f32),
+    pub gravity: (f64, f64,f64,f64),
+    pub wind: (f64,f64,f64,f64),
 }
 
 /*
