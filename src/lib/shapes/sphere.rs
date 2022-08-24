@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 use uuid::Uuid;
 
 pub struct Sphere {
