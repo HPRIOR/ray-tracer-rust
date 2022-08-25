@@ -2,6 +2,7 @@
 
 use uuid::Uuid;
 
+#[derive(PartialEq, Debug)]
 pub struct Sphere {
     id: Uuid,
 }
