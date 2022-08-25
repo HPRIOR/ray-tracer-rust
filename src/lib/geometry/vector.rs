@@ -1,3 +1,4 @@
+use crate::utils::math_ext::Square;
 
 pub type Tup = (f64, f64, f64, f64);
 
@@ -31,15 +32,6 @@ pub trait Operations {
     fn neg(self) -> Self::Output;
 }
 
-trait Square {
-    fn squared(self) -> f64;
-}
-
-impl Square for f64 {
-    fn squared(self) -> f64 {
-        self * self
-    }
-}
 
 impl Vector for Tup {
     type Output = Tup;
@@ -236,7 +228,15 @@ mod tests {
     fn complex_normalisation_is_correct() {
         let v1 = vector(1.0_f64, 2.0_f64, 3.0_f64);
         let result = v1.norm();
-        assert_eq!(result, (0.2672612419124244, 0.5345224838248488, 0.8017837257372732, 0.0))
+        assert_eq!(
+            result,
+            (
+                0.2672612419124244,
+                0.5345224838248488,
+                0.8017837257372732,
+                0.0
+            )
+        )
     }
 
     #[test]
