@@ -40,13 +40,14 @@ impl<'a> Hit for Option<Vec<Intersection<'a>>> {
     fn hit(&self) -> Option<&Self::Output> {
         match self {
             Some(i) => {
-                let mut unsorted: Vec<&Intersection> =
+                // there sould always be +1 intersection if Some(i)
+                let mut intersections: Vec<&Intersection> =
                     i.into_iter().filter(|i| i.at > 0.0).collect();
-                if unsorted.len() == 0 {
+                if intersections.len() == 0 {
                     return None;
                 }
-                unsorted.sort_by(|a, b| a.at.total_cmp(&b.at));
-                Some(unsorted[0])
+                intersections.sort_by(|a, b| a.at.total_cmp(&b.at));
+                Some(intersections[0])
             }
 
             None => None,
