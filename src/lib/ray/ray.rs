@@ -2,13 +2,14 @@
 
 use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
+    matrix::matrix::Matrix,
     shapes::sphere::Sphere,
     utils::math_ext::Square,
 };
 
 use super::intersection::{Intersection, Object};
 
-trait Hit {
+pub trait Hit {
     type Output;
 
     fn hit(&self) -> Option<&Self::Output>;
@@ -55,6 +56,7 @@ impl<'a> Hit for Option<Vec<Intersection<'a>>> {
     }
 }
 
+#[derive(Debug)]
 pub struct Ray {
     origin: Tup,
     direction: Tup,
@@ -65,41 +67,56 @@ impl Ray {
         Self { origin, direction }
     }
 
-    fn position(&self, t: f64) -> Tup {
+    pub fn position(&self, t: f64) -> Tup {
         self.direction.mul(t).add(self.origin)
     }
 
     /// Values are where the sphere is intersected on the ray from the origin or None if no
     /// intersection
-    fn intersect<'a>(&'a self, sphere: &'a Sphere) -> Option<Vec<Intersection>> {
+    pub fn intersect<'a>(&'a self, sphere: &'a Sphere) -> Option<Vec<Intersection>> {
         // vector from the sphere's center, to the ray origin remember: the sphere is centered at
         // the world origin. We are also assuming a size of 1 for the sphere
-        let sphere_to_ray = self.origin.sub(point(0.0, 0.0, 0.0));
 
-        let a = self.direction.dot(self.direction);
-        let b = (self.direction.dot(sphere_to_ray)) * 2.0;
-        let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
+        if let Some(sphere_transform) = sphere.transform.inverse() {
+            let new_ray = self.transform(&sphere_transform);
+            let sphere_to_ray = new_ray.origin.sub(point(0.0, 0.0, 0.0));
 
-        // if negative then ray misses - no intersection
-        let discriminant = b.squared() - 4.0 * a * c;
+            let a = new_ray.direction.dot(new_ray.direction);
+            let b = (new_ray.direction.dot(sphere_to_ray)) * 2.0;
+            let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
 
-        if discriminant < 0.0 {
-            return None;
+            // if negative then ray misses - no intersection
+            let discriminant = b.squared() - 4.0 * a * c;
+
+            if discriminant < 0.0 {
+                return None;
+            }
+
+            let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
+            let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
+
+            let i1 = Intersection::new(t1, Object::Sphere(sphere));
+            let i2 = Intersection::new(t2, Object::Sphere(sphere));
+            Some(vec![i1, i2])
+        } else {
+            None
         }
-
-        let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
-        let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
-
-        let i1 = Intersection::new(t1, Object::Sphere(sphere));
-        let i2 = Intersection::new(t2, Object::Sphere(sphere));
-        Some(vec![i1, i2])
     }
+
+    fn transform(&self, transform: &Matrix) -> Self {
+        Self {
+            origin: transform.mul_tup(self.origin),
+            direction: transform.mul_tup(self.direction),
+        }
+    }
+
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
         geometry::vector::{point, vector},
+        matrix::matrix::Matrix,
         ray::intersection::{Intersection, Object},
         shapes::sphere::Sphere,
     };
@@ -351,5 +368,44 @@ mod tests {
             _ => panic!(),
         };
         assert!(std::ptr::eq(obj_from_unwrapped, &sphere));
+    }
+
+    #[test]
+    fn ray_can_be_translated() {
+        let r1 = Ray::new(point(1.0, 2.0, 3.0), vector(0.0, 1.0, 0.0));
+        let m = Matrix::translation(3.0, 4.0, 5.0);
+        let r2 = r1.transform(&m);
+        assert_eq!(r2.origin, point(4.0, 6.0, 8.0));
+        assert_eq!(r2.direction, vector(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn ray_can_be_scaled() {
+        let r1 = Ray::new(point(1.0, 2.0, 3.0), vector(0.0, 1.0, 0.0));
+        let m = Matrix::scaling(2.0, 3.0, 4.0);
+        let r2 = r1.transform(&m);
+        assert_eq!(r2.origin, point(2.0, 6.0, 12.0));
+        assert_eq!(r2.direction, vector(0.0, 3.0, 0.0));
+    }
+    #[test]
+    fn intersecting_scaled_sphere_with_a_ray() {
+        let r1 = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+        let m = Matrix::scaling(2.0, 2.0, 2.0);
+        let s = Sphere::with_transform(m);
+        let xs = r1.intersect(&s);
+
+        assert!(xs.is_some());
+        let xs_unwrap = xs.unwrap();
+        assert_eq!(xs_unwrap[0].at, 3.0);
+        assert_eq!(xs_unwrap[1].at, 7.0);
+    }
+    #[test]
+    fn intersecting_translated_sphere_with_a_ray() {
+        let r1 = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+        let m = Matrix::translation(5.0, 0.0, 0.0);
+        let s = Sphere::with_transform(m);
+        let xs = r1.intersect(&s);
+
+        assert!(xs.is_none());
     }
 }
