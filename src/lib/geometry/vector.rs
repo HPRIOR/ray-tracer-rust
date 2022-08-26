@@ -18,6 +18,7 @@ pub trait Vector {
     fn norm(self) -> Self::Output;
     fn dot(self, other: Self::Output) -> f64;
     fn cross_prod(self, other: Self::Output) -> Self::Output;
+    fn reflect(self, normal: Self::Output) -> Self::Output;
     fn x(self) -> f64;
     fn y(self) -> f64;
     fn z(self) -> f64;
@@ -31,7 +32,6 @@ pub trait Operations {
     fn div(self, rhs: f64) -> Self::Output;
     fn neg(self) -> Self::Output;
 }
-
 
 impl Vector for Tup {
     type Output = Tup;
@@ -73,6 +73,10 @@ impl Vector for Tup {
     fn z(self) -> f64 {
         self.2
     }
+
+    fn reflect(self, normal: Self::Output) -> Self::Output {
+        self.sub(normal.mul(2.0).mul(self.dot(normal)))
+    }
 }
 
 impl Operations for Tup {
@@ -111,6 +115,8 @@ impl Operations for Tup {
 
 #[cfg(test)]
 mod tests {
+
+    use crate::utils::test::ApproxEq;
 
     use super::{point, vector, Operations, Vector};
 
@@ -252,5 +258,22 @@ mod tests {
         let v2 = vector(2.0, 3.0, 4.0);
         assert_eq!(v1.cross_prod(v2), vector(-1.0, 2.0, -1.0));
         assert_eq!(v2.cross_prod(v1), vector(1.0, -2.0, 1.0));
+    }
+
+    #[test]
+    fn reflect_vector_approach_at_45() {
+        let v = vector(1.0, -1.0, 0.0);
+        let n = vector(0.0, 1.0, 0.0);
+        let sut = v.reflect(n);
+        assert_eq!(sut, vector(1.0, 1.0, 0.0))
+    }
+
+    #[test]
+    fn reflect_off_slanted_surface() {
+        let v = vector(0.0, -1.0, 0.0);
+        let n = vector(2.0_f64.sqrt() / 2.0 , 2.0_f64.sqrt() / 2.0, 0.0);
+        let sut = v.reflect(n);
+        sut.approx_eq(vector(1.0, 0.0, 0.0));
+
     }
 }
