@@ -1,6 +1,6 @@
 use core::panic;
 
-use crate::geometry::vector::Tup;
+use crate::{colour::colour::Colour, geometry::vector::Tup};
 
 trait ToU32 {
     fn to_u32(&self) -> u32;
@@ -26,6 +26,19 @@ impl ApproxEq for Tup {
     }
 }
 
+impl ApproxEq for Colour {
+    type Type = Self;
+
+    fn approx_eq(self, other: Self::Type) {
+        let compare_list = vec![
+            compare(self.red, other.red),
+            compare(self.green, other.green),
+            compare(self.blue, other.blue),
+        ];
+        evaluate_result_list(&compare_list);
+    }
+}
+
 fn compare(a: f64, b: f64) -> Result<(), String> {
     let epsilon = 0.00001;
     let diff = (a - b).abs();
@@ -33,7 +46,7 @@ fn compare(a: f64, b: f64) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!(
-            "Diffirence between {} and {} is greater than {}",
+            "Difference between {} and {} is greater than {}",
             a, b, epsilon
         ))
     }
@@ -46,7 +59,11 @@ fn tup_approx_eq(a: Tup, b: Tup) {
         compare(a.2, b.2),
         compare(a.3, b.3),
     ];
-    let errors: Vec<String> = compare_list.into_iter().filter_map(|x| x.err()).collect();
+    evaluate_result_list(&compare_list)
+}
+
+fn evaluate_result_list(list: &Vec<Result<(), String>>) {
+    let errors: Vec<String> = list.into_iter().filter_map(|x| x.clone().err()).collect();
     if errors.len() > 0 {
         let error_msg = errors.join("\n");
         panic!("{}", error_msg);
