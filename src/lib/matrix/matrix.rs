@@ -6,7 +6,7 @@ use crate::geometry::vector::Tup;
 
 type MatrixVec = Vec<Vec<f64>>;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Matrix {
     matrix: MatrixVec,
 }
@@ -33,7 +33,7 @@ impl Matrix {
         }
     }
 
-    fn scaling(x: f64, y: f64, z: f64) -> Self {
+    pub fn scaling(x: f64, y: f64, z: f64) -> Self {
         Self {
             matrix: vec![
                 vec![x, 0.0, 0.0, 0.0],
@@ -48,7 +48,7 @@ impl Matrix {
         Matrix::scaling(x, y, z).mul(&self)
     }
 
-    fn translation(x: f64, y: f64, z: f64) -> Self {
+    pub fn translation(x: f64, y: f64, z: f64) -> Self {
         Self {
             matrix: vec![
                 vec![1.0, 0.0, 0.0, x],
@@ -125,7 +125,7 @@ impl Matrix {
         }
     }
 
-    fn inverse(&self) -> Option<Self> {
+    pub fn inverse(&self) -> Option<Self> {
         if self.determinant() == 0.0 {
             None
         } else {
@@ -640,9 +640,6 @@ mod tests {
         let full_quarter = Matrix::rotation(Axis::Z, PI / 2.0);
         let sut_half = half_quarter.mul_tup(p1);
         let sut_full = full_quarter.mul_tup(p1);
-
-        println!("{:?}", sut_half);
-        println!("{:?}", sut_full);
 
         sut_half.approx_eq(point(-(2.0.sqrt() / 2.0), 2.0.sqrt() / 2.0, 0.0));
         sut_full.approx_eq(point(-1.0, 0.0, 0.0));
