@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 float-cmp = "0.9.0"
 num-traits = "0.2.15"
+rayon = "1.5.3"
 
 [dependencies.uuid]
 version = "1.1.2"
