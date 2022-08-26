@@ -2,14 +2,13 @@
 
 use crate::shapes::sphere::Sphere;
 
-#[derive(PartialEq, Debug)]
+#[derive(Debug)]
 pub enum Object<'a> {
     Sphere(&'a Sphere),
 }
 
 
-
-#[derive(PartialEq, Debug)]
+#[derive(Debug)]
 pub struct Intersection<'a> {
     pub at: f64,
     pub object: Object<'a>,
