@@ -59,7 +59,7 @@ impl<'a> Hit for Option<Vec<Intersection<'a>>> {
 #[derive(Debug)]
 pub struct Ray {
     origin: Tup,
-    direction: Tup,
+    pub direction: Tup,
 }
 
 impl Ray {
@@ -109,7 +109,6 @@ impl Ray {
             direction: transform.mul_tup(self.direction),
         }
     }
-
 }
 
 #[cfg(test)]

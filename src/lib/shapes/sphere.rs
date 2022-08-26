@@ -12,7 +12,7 @@ use super::shape::Normal;
 pub struct Sphere {
     pub id: Uuid,
     pub transform: Matrix,
-    material: Material
+    pub material: Material
 }
 
 impl Sphere {

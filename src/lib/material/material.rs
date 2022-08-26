@@ -20,7 +20,7 @@ pub struct Material {
 }
 
 impl Material {
-    fn new(ambient: f64, diffuse: f64, specular: f64, shininess: f64, colour: Colour) -> Self {
+    pub fn new(ambient: f64, diffuse: f64, specular: f64, shininess: f64, colour: Colour) -> Self {
         Self {
             ambient,
             diffuse,
@@ -30,7 +30,14 @@ impl Material {
         }
     }
 
-    fn lighting(
+    pub fn with_colour(colour: Colour) -> Self {
+        Self {
+            colour,
+            ..Default::default()
+        }
+    }
+
+    pub fn lighting(
         &self,
         illum_point: Tup,
         light: &PointLight,
@@ -58,8 +65,6 @@ impl Material {
         }
 
         ambient.add(diffuse).add(specular)
-
-
     }
 }
 
@@ -80,7 +85,8 @@ mod tests {
     use crate::{
         colour::colour::Colour,
         geometry::vector::{point, vector},
-        light::light::PointLight, utils::test::ApproxEq,
+        light::light::PointLight,
+        utils::test::ApproxEq,
     };
 
     use super::Material;
