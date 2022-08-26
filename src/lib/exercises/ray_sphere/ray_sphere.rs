@@ -49,6 +49,8 @@ pub fn render_sphere() {
 
 #[cfg(test)]
 mod tests {
+    #![allow(unused_imports)]
+
     use super::render_sphere;
 
     #[test]
