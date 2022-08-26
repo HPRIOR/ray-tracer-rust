@@ -1,9 +1,9 @@
-#![allow(unused_variables)]
+#![allow(unused_variables, dead_code)]
 use uuid::Uuid;
 
 use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
-    matrix::matrix::Matrix,
+    matrix::matrix::Matrix, material::material::Material, 
 };
 
 use super::shape::Normal;
@@ -12,6 +12,7 @@ use super::shape::Normal;
 pub struct Sphere {
     pub id: Uuid,
     pub transform: Matrix,
+    material: Material
 }
 
 impl Sphere {
@@ -19,6 +20,7 @@ impl Sphere {
         Self {
             id: Uuid::new_v4(),
             transform: Matrix::ident(),
+            material: Material::default(),
         }
     }
 
@@ -26,8 +28,20 @@ impl Sphere {
         Self {
             id: Uuid::new_v4(),
             transform: translation,
+            material: Material::default()
+
         }
     }
+
+    pub fn with_attributes(translation: Matrix, material: Material) -> Self{
+        Self {
+            id: Uuid::new_v4(),
+            transform: translation,
+            material
+        }
+    }
+
+
 }
 
 impl Normal for Sphere {
