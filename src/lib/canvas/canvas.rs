@@ -13,7 +13,7 @@ trait NormaliseColour<T> {
     fn as_norm_colour(self) -> i32;
 }
 
-impl NormaliseColour<f32> for f32 {
+impl NormaliseColour<f64> for f64 {
     fn as_norm_colour(self) -> i32 {
         let normalised_self = (self * 255.0).ceil() as i32;
         if normalised_self >= 255 {

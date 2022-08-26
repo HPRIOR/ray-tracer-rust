@@ -2,14 +2,25 @@ use std::ops::{Add, Mul, Sub};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Colour {
-    pub red: f32,
-    pub green: f32,
-    pub blue: f32,
+    pub red: f64,
+    pub green: f64,
+    pub blue: f64,
 }
 
 impl Colour {
-    pub fn new(red: f32, green: f32, blue: f32) -> Self {
+    pub fn new(red: f64, green: f64, blue: f64) -> Self {
         Self { red, green, blue }
+    }
+
+    pub fn black() -> Self {
+        Self::default()
+    }
+    pub fn white() -> Self {
+        Self {
+            red: 255.0,
+            green: 255.0,
+            blue: 255.0,
+        }
     }
 }
 impl Default for Colour {
@@ -34,6 +45,18 @@ impl Add for Colour {
     }
 }
 
+impl Add<f64> for Colour{
+    type Output = Colour;
+
+    fn add(self, rhs: f64) -> Self::Output {
+        Colour {
+            red: self.red + rhs,
+            green: self.green + rhs,
+            blue: self.blue + rhs,
+        }
+    }
+}
+
 impl Sub for Colour {
     type Output = Colour;
 
@@ -46,10 +69,10 @@ impl Sub for Colour {
     }
 }
 
-impl Mul<f32> for Colour {
+impl Mul<f64> for Colour {
     type Output = Colour;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         Colour {
             red: self.red * rhs,
             green: self.green * rhs,
@@ -88,9 +111,9 @@ mod tests {
         let c1 = Colour::new(0.9, 0.6, 0.75);
         let c2 = Colour::new(0.7, 0.1, 0.25);
         let sut = c1 + c2;
-        assert!(approx_eq!(f32, sut.red, 1.6, ulps = 2));
-        assert!(approx_eq!(f32, sut.green, 0.7, ulps = 2));
-        assert!(approx_eq!(f32, sut.blue, 1.0, ulps = 2));
+        assert!(approx_eq!(f64, sut.red, 1.6, ulps = 2));
+        assert!(approx_eq!(f64, sut.green, 0.7, ulps = 2));
+        assert!(approx_eq!(f64, sut.blue, 1.0, ulps = 2));
     }
 
     #[test]
@@ -98,9 +121,9 @@ mod tests {
         let c1 = Colour::new(0.9, 0.6, 0.75);
         let c2 = Colour::new(0.7, 0.1, 0.25);
         let sut = c1 - c2;
-        assert!(approx_eq!(f32, sut.red, 0.2, ulps = 2));
-        assert!(approx_eq!(f32, sut.green, 0.5, ulps = 2));
-        assert!(approx_eq!(f32, sut.blue, 0.5, ulps = 2));
+        assert!(approx_eq!(f64, sut.red, 0.2, ulps = 2));
+        assert!(approx_eq!(f64, sut.green, 0.5, ulps = 2));
+        assert!(approx_eq!(f64, sut.blue, 0.5, ulps = 2));
     }
 
     #[test]
@@ -115,8 +138,8 @@ mod tests {
         let c1 = Colour::new(1.0, 0.2, 0.4);
         let c2 = Colour::new(0.9, 1.0, 0.1);
         let sut = c1 * c2;
-        assert!(approx_eq!(f32, sut.red, 0.9, ulps = 2));
-        assert!(approx_eq!(f32, sut.green, 0.2, ulps = 2));
-        assert!(approx_eq!(f32, sut.blue, 0.04, ulps = 2));
+        assert!(approx_eq!(f64, sut.red, 0.9, ulps = 2));
+        assert!(approx_eq!(f64, sut.green, 0.2, ulps = 2));
+        assert!(approx_eq!(f64, sut.blue, 0.04, ulps = 2));
     }
 }
