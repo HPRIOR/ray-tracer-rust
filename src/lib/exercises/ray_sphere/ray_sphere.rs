@@ -26,7 +26,7 @@ pub fn render_sphere() {
         .collect();
 
 
-    let coords: Vec<Coord> = rays
+    let hit_coords: Vec<Coord> = rays
         .par_iter()
         .filter_map(|ray| {
             let intersections: Option<Vec<Intersection>> = ray.intersect(&sphere);
@@ -40,7 +40,7 @@ pub fn render_sphere() {
         })
         .collect();
 
-    coords.into_iter().for_each(|coord| {
+    hit_coords.into_iter().for_each(|coord| {
         set_pixel(coord, &mut canvas);
     });
 
