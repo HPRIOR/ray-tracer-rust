@@ -67,7 +67,7 @@ impl Matrix {
         self.matrix[row][col]
     }
 
-    fn transpose(&self) -> Self {
+    pub fn transpose(&self) -> Self {
         let matrix = &self.matrix;
 
         let mut new_matrix = self.matrix.clone();
