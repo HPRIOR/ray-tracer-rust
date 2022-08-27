@@ -12,11 +12,11 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Material {
-    ambient: f64,
-    diffuse: f64,
-    specular: f64,
-    shininess: f64,
-    colour: Colour,
+    pub ambient: f64,
+    pub diffuse: f64,
+    pub specular: f64,
+    pub shininess: f64,
+    pub colour: Colour,
 }
 
 impl Material {
