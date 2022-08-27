@@ -1,13 +1,14 @@
-pub mod geometry;
-pub mod colour;
 pub mod canvas;
-pub mod matrix;
-pub mod utils;
-pub mod ray;
-pub mod shapes;
+pub mod colour;
 pub mod exercises;
+pub mod geometry;
 pub mod light;
 pub mod material;
+pub mod matrix;
+pub mod ray;
+pub mod shapes;
+pub mod utils;
+pub mod world;
 
 pub fn lib_entry(){
     

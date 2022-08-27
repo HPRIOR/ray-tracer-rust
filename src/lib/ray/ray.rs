@@ -7,8 +7,22 @@ use crate::{
     utils::math_ext::Square,
 };
 
-use super::intersection::{Intersection, Object};
+#[derive(Debug)]
+pub enum Object<'a> {
+    Sphere(&'a Sphere),
+}
 
+#[derive(Debug)]
+pub struct Intersection<'a> {
+    pub at: f64,
+    pub object: Object<'a>,
+}
+
+impl<'a> Intersection<'a> {
+    pub fn new(at: f64, object: Object<'a>) -> Self {
+        Self { at, object }
+    }
+}
 pub trait Hit {
     type Output;
 
@@ -33,29 +47,6 @@ impl<'a> Hit for Vec<Intersection<'a>> {
     }
 }
 
-/// Implemented for optional type for a nicer interface with ray.intersect() method which returns
-/// an option - None if no intersection occurs
-impl<'a> Hit for Option<Vec<Intersection<'a>>> {
-    type Output = Intersection<'a>;
-
-    fn hit(&self) -> Option<&Self::Output> {
-        match self {
-            Some(i) => {
-                // there sould always be +1 intersection if Some(i)
-                let mut intersections: Vec<&Intersection> =
-                    i.into_iter().filter(|i| i.at > 0.0).collect();
-                if intersections.len() == 0 {
-                    return None;
-                }
-                intersections.sort_by(|a, b| a.at.total_cmp(&b.at));
-                Some(intersections[0])
-            }
-
-            None => None,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct Ray {
     origin: Tup,
@@ -73,10 +64,7 @@ impl Ray {
 
     /// Values are where the sphere is intersected on the ray from the origin or None if no
     /// intersection
-    pub fn intersect<'a>(&'a self, sphere: &'a Sphere) -> Option<Vec<Intersection>> {
-        // vector from the sphere's center, to the ray origin remember: the sphere is centered at
-        // the world origin. We are also assuming a size of 1 for the sphere
-
+    pub fn intersect<'a>(&'a self, sphere: &'a Sphere) -> Vec<Intersection> {
         if let Some(sphere_transform) = sphere.transform.inverse() {
             let new_ray = self.transform(&sphere_transform);
             let sphere_to_ray = new_ray.origin.sub(point(0.0, 0.0, 0.0));
@@ -89,7 +77,7 @@ impl Ray {
             let discriminant = b.squared() - 4.0 * a * c;
 
             if discriminant < 0.0 {
-                return None;
+                return vec![];
             }
 
             let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
@@ -97,9 +85,9 @@ impl Ray {
 
             let i1 = Intersection::new(t1, Object::Sphere(sphere));
             let i2 = Intersection::new(t2, Object::Sphere(sphere));
-            Some(vec![i1, i2])
+            vec![i1, i2]
         } else {
-            None
+            vec![]
         }
     }
 
@@ -116,11 +104,10 @@ mod tests {
     use crate::{
         geometry::vector::{point, vector},
         matrix::matrix::Matrix,
-        ray::intersection::{Intersection, Object},
         shapes::sphere::Sphere,
     };
 
-    use super::{Hit, Ray};
+    use super::{Hit, Intersection, Object, Ray};
 
     #[test]
     fn ray_can_be_created_with_origin_and_direction() {
@@ -151,11 +138,10 @@ mod tests {
         let sphere = Sphere::new();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.is_some());
+        assert!(xs.len() == 2);
 
-        let sut = xs.unwrap();
-        assert_eq!(sut[0].at, 4.0);
-        assert_eq!(sut[1].at, 6.0);
+        assert_eq!(xs[0].at, 4.0);
+        assert_eq!(xs[1].at, 6.0);
     }
 
     #[test]
@@ -167,11 +153,10 @@ mod tests {
         let sphere = Sphere::new();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.is_some());
+        assert!(xs.len() == 2);
 
-        let sut = xs.unwrap();
-        assert_eq!(sut[0].at, 5.0);
-        assert_eq!(sut[1].at, 5.0);
+        assert_eq!(xs[0].at, 5.0);
+        assert_eq!(xs[1].at, 5.0);
     }
 
     #[test]
@@ -183,7 +168,7 @@ mod tests {
         let sphere = Sphere::new();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.is_none());
+        assert!(xs.len() == 0);
     }
 
     #[test]
@@ -195,11 +180,10 @@ mod tests {
         let sphere = Sphere::new();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.is_some());
+        assert!(xs.len() == 2);
 
-        let sut = xs.unwrap();
-        assert_eq!(sut[0].at, -1.0);
-        assert_eq!(sut[1].at, 1.0);
+        assert_eq!(xs[0].at, -1.0);
+        assert_eq!(xs[1].at, 1.0);
     }
 
     #[test]
@@ -211,11 +195,10 @@ mod tests {
         let sphere = Sphere::new();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.is_some());
+        assert!(xs.len() == 2);
 
-        let sut = xs.unwrap();
-        assert_eq!(sut[0].at, -6.0);
-        assert_eq!(sut[1].at, -4.0);
+        assert_eq!(xs[0].at, -6.0);
+        assert_eq!(xs[1].at, -4.0);
     }
 
     #[test]
@@ -225,14 +208,13 @@ mod tests {
         let ray = Ray::new(origin, direction);
         let sphere = Sphere::new();
         let sut = ray.intersect(&sphere);
-        assert!(sut.is_some());
+        assert!(sut.len() == 2);
 
-        let intersect = sut.unwrap();
-        let o1 = match intersect[0].object {
+        let o1 = match sut[0].object {
             Object::Sphere(s) => s,
             _ => panic!(),
         };
-        let o2 = match intersect[1].object {
+        let o2 = match sut[1].object {
             Object::Sphere(s) => s,
             _ => panic!(),
         };
@@ -289,87 +271,6 @@ mod tests {
     }
 
     #[test]
-    fn correct_hit_when_all_intersections_have_positive_t_opt() {
-        let s = Sphere::new();
-        let i1 = Intersection::new(1.0, Object::Sphere(&s));
-        let i2 = Intersection::new(2.0, Object::Sphere(&s));
-        let xs = Some(vec![i1, i2]);
-        let sut = xs.hit().unwrap();
-        assert!(std::ptr::eq(&xs.as_ref().unwrap()[0], sut));
-    }
-
-    #[test]
-    fn correct_hit_when_all_intersections_some_intersections_have_negative_t_opt() {
-        let s = Sphere::new();
-        let i1 = Intersection::new(-1.0, Object::Sphere(&s));
-        let i2 = Intersection::new(1.0, Object::Sphere(&s));
-        let xs = Some(vec![i1, i2]);
-        let sut = xs.hit().unwrap();
-        assert!(std::ptr::eq(&xs.as_ref().unwrap()[1], sut));
-    }
-
-    #[test]
-    fn correct_hit_when_all_intersections_all_intersections_have_negative_t_opt() {
-        let s = Sphere::new();
-        let i1 = Intersection::new(-1.0, Object::Sphere(&s));
-        let i2 = Intersection::new(-1.0, Object::Sphere(&s));
-        let xs = Some(vec![i1, i2]);
-        let sut = xs.hit();
-        assert!(sut.is_none());
-    }
-
-    #[test]
-    fn hit_is_lowest_non_negative_intersection_opt() {
-        let s = Sphere::new();
-        let i1 = Intersection::new(5.0, Object::Sphere(&s));
-        let i2 = Intersection::new(7.0, Object::Sphere(&s));
-        let i3 = Intersection::new(-3.0, Object::Sphere(&s));
-        let i4 = Intersection::new(2.0, Object::Sphere(&s));
-        let xs = Some(vec![i1, i2, i3, i4]);
-        let sut = xs.hit().unwrap();
-        assert!(std::ptr::eq(&xs.as_ref().unwrap()[3], sut));
-    }
-
-    #[test]
-    fn optional_hit_api_works() {
-        let origin = point(0.0, 0.0, 0.0);
-        let direction = vector(0.0, 0.0, 1.0);
-        let ray = Ray::new(origin, direction);
-
-        // get intersent of sphere
-        let sphere = Sphere::new();
-        let xs = ray.intersect(&sphere);
-
-        let unwrapped_xs = xs.as_ref().unwrap();
-
-        // calculate potential hits on the optional value
-        let sut = xs.hit();
-
-        // is correct
-        assert!(sut.is_some());
-        let some = sut.unwrap();
-        assert_eq!(some.at, 1.0);
-
-        let object = match some.object {
-            Object::Sphere(s) => s,
-            _ => panic!(),
-        };
-
-        // hit references original sphere
-        assert!(std::ptr::eq(object, &sphere));
-
-        // can still access previously unwrapped elements
-        assert_eq!(unwrapped_xs[0].at, -1.0);
-        assert_eq!(unwrapped_xs[1].at, 1.0);
-
-        let obj_from_unwrapped = match unwrapped_xs[0].object {
-            Object::Sphere(o) => o,
-            _ => panic!(),
-        };
-        assert!(std::ptr::eq(obj_from_unwrapped, &sphere));
-    }
-
-    #[test]
     fn ray_can_be_translated() {
         let r1 = Ray::new(point(1.0, 2.0, 3.0), vector(0.0, 1.0, 0.0));
         let m = Matrix::translation(3.0, 4.0, 5.0);
@@ -393,10 +294,9 @@ mod tests {
         let s = Sphere::with_transform(m);
         let xs = r1.intersect(&s);
 
-        assert!(xs.is_some());
-        let xs_unwrap = xs.unwrap();
-        assert_eq!(xs_unwrap[0].at, 3.0);
-        assert_eq!(xs_unwrap[1].at, 7.0);
+        assert!(xs.len() == 2);
+        assert_eq!(xs[0].at, 3.0);
+        assert_eq!(xs[1].at, 7.0);
     }
     #[test]
     fn intersecting_translated_sphere_with_a_ray() {
@@ -405,6 +305,6 @@ mod tests {
         let s = Sphere::with_transform(m);
         let xs = r1.intersect(&s);
 
-        assert!(xs.is_none());
+        assert!(xs.len() == 0);
     }
 }
