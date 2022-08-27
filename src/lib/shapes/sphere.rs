@@ -3,16 +3,17 @@ use uuid::Uuid;
 
 use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
-    matrix::matrix::Matrix, material::material::Material, 
+    material::material::Material,
+    matrix::matrix::Matrix,
 };
 
-use super::shape::Normal;
+use super::shape::{HasMaterial, HasNormal, HasTransform, IsShape};
 
 #[derive(Debug)]
 pub struct Sphere {
     pub id: Uuid,
     pub transform: Matrix,
-    pub material: Material
+    pub material: Material,
 }
 
 impl Sphere {
@@ -28,23 +29,22 @@ impl Sphere {
         Self {
             id: Uuid::new_v4(),
             transform: translation,
-            material: Material::default()
-
+            material: Material::default(),
         }
     }
 
-    pub fn with_attributes(translation: Matrix, material: Material) -> Self{
+    pub fn with_attributes(translation: Matrix, material: Material) -> Self {
         Self {
             id: Uuid::new_v4(),
             transform: translation,
-            material
+            material,
         }
     }
-
-
 }
 
-impl Normal for Sphere {
+impl IsShape for Sphere{}
+
+impl HasNormal for Sphere {
     fn normal_at(&self, world_point: Tup) -> Option<Tup> {
         let object_normal = self
             .transform
@@ -61,6 +61,18 @@ impl Normal for Sphere {
     }
 }
 
+impl HasTransform for Sphere {
+    fn transform(&self) -> &Matrix {
+        &self.transform
+    }
+}
+
+impl HasMaterial for Sphere {
+    fn material(&self) -> &Material {
+        &self.material
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::f64::consts::PI;
@@ -68,7 +80,7 @@ mod tests {
     use crate::{
         geometry::vector::{point, vector},
         matrix::matrix::{Axis, Matrix},
-        shapes::shape::Normal,
+        shapes::shape::HasNormal,
         utils::test::ApproxEq,
     };
 

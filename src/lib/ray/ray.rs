@@ -3,23 +3,25 @@
 use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
     matrix::matrix::Matrix,
-    shapes::sphere::Sphere,
+    shapes::shape::HasTransform,
     utils::math_ext::Square,
 };
+use crate::shapes::shape::HasNormal;
+
+// ----------- Intersection ----------- //
 
 #[derive(Debug)]
-pub enum Object<'a> {
-    Sphere(&'a Sphere),
-}
-
-#[derive(Debug)]
-pub struct Intersection<'a> {
+pub struct Intersection<'a, T: HasNormal> {
     pub at: f64,
-    pub object: Object<'a>,
+    // not sure having a enum to hold the object reference is the best solution.
+    // when more objects are introduced it will be necessary to pattern match over all
+    // possibilities and essentially apply the same logic on them. It should be a reference to some
+    // object which implements an 'Object/Shape Trait'
+    pub object: &'a T,
 }
 
-impl<'a> Intersection<'a> {
-    pub fn new(at: f64, object: Object<'a>) -> Self {
+impl<'a, T: HasNormal> Intersection<'a, T> {
+    pub fn new(at: f64, object: &'a T) -> Self {
         Self { at, object }
     }
 }
@@ -29,8 +31,8 @@ pub trait Hit {
     fn hit(&self) -> Option<&Self::Output>;
 }
 
-impl<'a> Hit for Vec<Intersection<'a>> {
-    type Output = Intersection<'a>;
+impl<'a, T: HasNormal> Hit for Vec<Intersection<'a, T>> {
+    type Output = Intersection<'a, T>;
 
     fn hit(&self) -> Option<&Self::Output> {
         if self.len() == 0 {
@@ -47,6 +49,15 @@ impl<'a> Hit for Vec<Intersection<'a>> {
     }
 }
 
+// ----------- PreComp ----------- //
+struct PreComp<'a, T> {
+    object: &'a T,
+    point: Tup,
+    eye_v: Tup,
+    norm_v: Tup,
+}
+
+// ----------- Ray ----------- //
 #[derive(Debug)]
 pub struct Ray {
     origin: Tup,
@@ -64,8 +75,8 @@ impl Ray {
 
     /// Values are where the sphere is intersected on the ray from the origin or None if no
     /// intersection
-    pub fn intersect<'a>(&'a self, sphere: &'a Sphere) -> Vec<Intersection> {
-        if let Some(sphere_transform) = sphere.transform.inverse() {
+    pub fn intersect<'a, T: HasTransform + HasNormal>(&'a self, shape: &'a T) -> Vec<Intersection<T>> {
+        if let Some(sphere_transform) = shape.transform().inverse() {
             let new_ray = self.transform(&sphere_transform);
             let sphere_to_ray = new_ray.origin.sub(point(0.0, 0.0, 0.0));
 
@@ -83,12 +94,28 @@ impl Ray {
             let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
             let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
 
-            let i1 = Intersection::new(t1, Object::Sphere(sphere));
-            let i2 = Intersection::new(t2, Object::Sphere(sphere));
+            let i1 = Intersection::new(t1, shape);
+            let i2 = Intersection::new(t2, shape);
             vec![i1, i2]
         } else {
             vec![]
         }
+    }
+
+    fn prepare_computations<'a, T: HasNormal>(
+        &'a self,
+        intersection: &Intersection<'a, T>,
+    ) -> Option<PreComp<T>> {
+        let object = intersection.object;
+        let p = self.position(intersection.at);
+        let eye_v = self.direction.neg();
+        let norm_v_opt = object.normal_at(p);
+        norm_v_opt.map(|norm_v| PreComp {
+            object,
+            point: p,
+            eye_v,
+            norm_v,
+        })
     }
 
     fn transform(&self, transform: &Matrix) -> Self {
@@ -107,7 +134,7 @@ mod tests {
         shapes::sphere::Sphere,
     };
 
-    use super::{Hit, Intersection, Object, Ray};
+    use super::{Hit, Intersection, Ray};
 
     #[test]
     fn ray_can_be_created_with_origin_and_direction() {
@@ -210,14 +237,8 @@ mod tests {
         let sut = ray.intersect(&sphere);
         assert!(sut.len() == 2);
 
-        let o1 = match sut[0].object {
-            Object::Sphere(s) => s,
-            _ => panic!(),
-        };
-        let o2 = match sut[1].object {
-            Object::Sphere(s) => s,
-            _ => panic!(),
-        };
+        let o1 = sut[0].object;
+        let o2 = sut[1].object;
 
         let other_sphere = Sphere::new();
 
@@ -231,8 +252,8 @@ mod tests {
     #[test]
     fn correct_hit_when_all_intersections_have_positive_t() {
         let s = Sphere::new();
-        let i1 = Intersection::new(1.0, Object::Sphere(&s));
-        let i2 = Intersection::new(2.0, Object::Sphere(&s));
+        let i1 = Intersection::new(1.0, &s);
+        let i2 = Intersection::new(2.0, &s);
         let xs = vec![i1, i2];
         let sut = xs.hit().unwrap();
         assert!(std::ptr::eq(&xs[0], sut));
@@ -241,8 +262,8 @@ mod tests {
     #[test]
     fn correct_hit_when_all_intersections_some_intersections_have_negative_t() {
         let s = Sphere::new();
-        let i1 = Intersection::new(-1.0, Object::Sphere(&s));
-        let i2 = Intersection::new(1.0, Object::Sphere(&s));
+        let i1 = Intersection::new(-1.0, &s);
+        let i2 = Intersection::new(1.0, &s);
         let xs = vec![i1, i2];
         let sut = xs.hit().unwrap();
         assert!(std::ptr::eq(&xs[1], sut));
@@ -251,8 +272,8 @@ mod tests {
     #[test]
     fn correct_hit_when_all_intersections_all_intersections_have_negative_t() {
         let s = Sphere::new();
-        let i1 = Intersection::new(-1.0, Object::Sphere(&s));
-        let i2 = Intersection::new(-1.0, Object::Sphere(&s));
+        let i1 = Intersection::new(-1.0, &s);
+        let i2 = Intersection::new(-1.0, &s);
         let xs = vec![i1, i2];
         let sut = xs.hit();
         assert!(sut.is_none());
@@ -261,10 +282,10 @@ mod tests {
     #[test]
     fn hit_is_lowest_non_negative_intersection() {
         let s = Sphere::new();
-        let i1 = Intersection::new(5.0, Object::Sphere(&s));
-        let i2 = Intersection::new(7.0, Object::Sphere(&s));
-        let i3 = Intersection::new(-3.0, Object::Sphere(&s));
-        let i4 = Intersection::new(2.0, Object::Sphere(&s));
+        let i1 = Intersection::new(5.0, &s);
+        let i2 = Intersection::new(7.0, &s);
+        let i3 = Intersection::new(-3.0, &s);
+        let i4 = Intersection::new(2.0, &s);
         let xs = vec![i1, i2, i3, i4];
         let sut = xs.hit().unwrap();
         assert!(std::ptr::eq(&xs[3], sut));
@@ -306,5 +327,24 @@ mod tests {
         let xs = r1.intersect(&s);
 
         assert!(xs.len() == 0);
+    }
+
+    #[test]
+    fn precomputing_intersection_state() {
+        let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+        let shape = Sphere::new();
+        let i = Intersection {
+            at: 4.0,
+            object: &shape,
+        };
+        let comps = ray.prepare_computations(&i).unwrap();
+        let comps_obj = comps.object;
+        let intersect_obj = i.object;
+        // intersect and precom reference the same obj
+        assert!(std::ptr::eq(comps_obj, intersect_obj));
+
+        assert_eq!(comps.point, point(0.0, 0.0, -1.0));
+        assert_eq!(comps.eye_v, vector(0.0, 0.0, -1.0));
+        assert_eq!(comps.norm_v, vector(0.0, 0.0, -1.0));
     }
 }

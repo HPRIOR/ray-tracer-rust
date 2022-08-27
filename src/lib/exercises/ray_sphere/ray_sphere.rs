@@ -6,12 +6,12 @@ use crate::{
     light::light::PointLight,
     material::material::Material,
     matrix::matrix::Matrix,
-    ray::ray::{Hit, Ray, Intersection, Object},
-    shapes::{shape::Normal, sphere::Sphere},
+    ray::ray::{Hit, Ray, Intersection},
+    shapes::{shape::{HasNormal, IsShape}, sphere::Sphere},
 };
 use rayon::prelude::*;
 
-pub fn render_sphere() {
+pub fn render_sphere<T: IsShape>() {
     let sphere = Sphere::with_attributes(
         Matrix::scaling(400.0, 400.0, 500.0).translate(500.0, 500.0, 0.0),
         Material::with_colour(Colour::new(0.5, 0.2, 1.0)),
@@ -35,13 +35,11 @@ pub fn render_sphere() {
     let hit_coords: Vec<(Option<Colour>, Coord)> = rays
         .par_iter()
         .filter_map(|ray| {
-            let intersections: Vec<Intersection> = ray.intersect(&sphere);
+            let intersections: Vec<Intersection<Sphere>> = ray.intersect(&sphere);
             let hit = intersections.hit();
             if let Some(hit) = hit {
                 let p = ray.position(hit.at);
-                let sphere = match hit.object {
-                    Object::Sphere(sphere) => sphere,
-                };
+                let sphere = hit.object;
                 let normal = sphere.normal_at(p);
                 let eye = ray.direction.neg();
                 let colour = normal.map(|normal| sphere.material.lighting(p, &light, eye, normal));
