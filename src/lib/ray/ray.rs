@@ -1,10 +1,9 @@
 #![allow(dead_code, unused_variables, unreachable_patterns)]
 
-use crate::shapes::shape::HasNormal;
+use crate::shapes::shape::Shape;
 use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
     matrix::matrix::Matrix,
-    shapes::shape::HasTransform,
     utils::math_ext::Square,
 };
 
@@ -71,7 +70,7 @@ impl Ray {
         self.direction.mul(t).add(self.origin)
     }
 
-    pub fn intersect<'a, T: HasTransform>(
+    pub fn intersect<'a, T: Shape>(
         &'a self,
         shape: &'a T,
     ) -> Vec<Intersection<T>> {
@@ -101,7 +100,7 @@ impl Ray {
         }
     }
 
-    fn prepare_computations<'a, T: HasNormal>(
+    fn prepare_computations<'a, T: Shape>(
         &'a self,
         intersection: &Intersection<'a, T>,
     ) -> Option<PreComp<T>> {

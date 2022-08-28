@@ -6,8 +6,8 @@ use crate::{
     light::light::PointLight,
     material::material::Material,
     matrix::matrix::Matrix,
-    ray::ray::{Hit, Ray, Intersection},
-    shapes::{shape::HasNormal, sphere::Sphere},
+    ray::ray::{Hit, Intersection, Ray},
+    shapes::{sphere::Sphere, shape::Shape},
 };
 use rayon::prelude::*;
 

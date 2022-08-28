@@ -7,7 +7,7 @@ use crate::{
     matrix::matrix::Matrix,
 };
 
-use super::shape::{HasMaterial, HasNormal, HasTransform};
+use super::shape::Shape;
 
 #[derive(Debug)]
 pub struct Sphere {
@@ -42,8 +42,15 @@ impl Sphere {
     }
 }
 
+impl Shape for Sphere{
+    fn material(&self) -> &Material {
+        &self.material
+    }
 
-impl HasNormal for Sphere {
+    fn transform(&self) -> &Matrix {
+        &self.transform
+    }
+
     fn normal_at(&self, world_point: Tup) -> Option<Tup> {
         let object_normal = self
             .transform
@@ -60,17 +67,7 @@ impl HasNormal for Sphere {
     }
 }
 
-impl HasTransform for Sphere {
-    fn transform(&self) -> &Matrix {
-        &self.transform
-    }
-}
 
-impl HasMaterial for Sphere {
-    fn material(&self) -> &Material {
-        &self.material
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -79,8 +76,7 @@ mod tests {
     use crate::{
         geometry::vector::{point, vector},
         matrix::matrix::{Axis, Matrix},
-        shapes::shape::HasNormal,
-        utils::test::ApproxEq,
+        utils::test::ApproxEq, shapes::shape::Shape,
     };
 
     use super::Sphere;

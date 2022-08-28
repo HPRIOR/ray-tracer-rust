@@ -6,15 +6,15 @@ use crate::{
     material::material::Material,
     matrix::matrix::Matrix,
     ray::ray::{Ray, Intersection},
-    shapes::{sphere::Sphere, shape::{HasTransform, HasNormal}},
+    shapes::{sphere::Sphere, shape::Shape},
 };
 
-struct World<T: HasTransform> {
+struct World<T: Shape> {
     pub objects: Vec<T>,
     pub light: PointLight,
 }
 
-impl<'a, T:HasTransform> World<T> {
+impl<'a, T:Shape> World<T> {
     pub fn intersect_world(&'a self, ray: &'a Ray) -> Vec<Intersection<'a, T>> {
         let mut result: Vec<Intersection<'a, T>> = self
             .objects
