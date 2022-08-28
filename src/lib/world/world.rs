@@ -30,11 +30,11 @@ impl<'a> World {
 
 impl Default for World {
     fn default() -> Self {
-        let s1 = Box::new(Sphere::with_attributes(
+        let s1 = Sphere::as_trait_with_attr(
             Matrix::ident(),
-            Material::new(0.1, 0.7, 0.2, 200.0, Colour::new(0.8, 1.0, 0.6))),
+            Material::new(0.1, 0.7, 0.2, 200.0, Colour::new(0.8, 1.0, 0.6)),
         );
-        let s2 = Box::new(Sphere::with_transform(Matrix::scaling(0.5, 0.5, 0.5)));
+        let s2 = Sphere::as_trait_with_transform(Matrix::scaling(0.5, 0.5, 0.5));
         Self {
             objects: vec![s1, s2],
             light: PointLight::new(point(-10.0, 10.0, -10.0), Colour::white()),

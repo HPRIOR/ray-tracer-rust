@@ -16,6 +16,11 @@ pub struct Sphere {
     pub material: Material,
 }
 
+pub enum As {
+    Trait,
+    Struct,
+}
+
 impl Sphere {
     pub fn new() -> Self {
         Self {
@@ -33,16 +38,40 @@ impl Sphere {
         }
     }
 
-    pub fn with_attributes(translation: Matrix, material: Material) -> Self {
+    pub fn with_attr(translation: Matrix, material: Material) -> Self {
         Self {
             id: Uuid::new_v4(),
             transform: translation,
             material,
         }
     }
+
+    pub fn as_trait() -> Box<dyn Shape> {
+        Box::new(Self {
+            id: Uuid::new_v4(),
+            transform: Matrix::ident(),
+            material: Material::default(),
+        })
+    }
+
+    pub fn as_trait_with_transform(translation: Matrix) -> Box<dyn Shape> {
+        Box::new(Self {
+            id: Uuid::new_v4(),
+            transform: translation,
+            material: Material::default(),
+        })
+    }
+
+    pub fn as_trait_with_attr(translation: Matrix, material: Material) -> Box<dyn Shape> {
+        Box::new(Self {
+            id: Uuid::new_v4(),
+            transform: translation,
+            material,
+        })
+    }
 }
 
-impl Shape for Sphere{
+impl Shape for Sphere {
     fn material(&self) -> &Material {
         &self.material
     }
@@ -67,8 +96,6 @@ impl Shape for Sphere{
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use std::f64::consts::PI;
@@ -76,7 +103,8 @@ mod tests {
     use crate::{
         geometry::vector::{point, vector},
         matrix::matrix::{Axis, Matrix},
-        utils::test::ApproxEq, shapes::shape::Shape,
+        shapes::shape::Shape,
+        utils::test::ApproxEq,
     };
 
     use super::Sphere;
