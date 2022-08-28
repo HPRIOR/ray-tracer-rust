@@ -8,5 +8,5 @@ use module_lib::{exercises::{
 fn main() {
     //create_projectile_canvas("projectile");
     // create_clock();
-    render_sphere::<Sphere>();
+    render_sphere();
 }

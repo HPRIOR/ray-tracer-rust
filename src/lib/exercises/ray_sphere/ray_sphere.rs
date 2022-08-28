@@ -7,11 +7,11 @@ use crate::{
     material::material::Material,
     matrix::matrix::Matrix,
     ray::ray::{Hit, Ray, Intersection},
-    shapes::{shape::{HasNormal, IsShape}, sphere::Sphere},
+    shapes::{shape::HasNormal, sphere::Sphere},
 };
 use rayon::prelude::*;
 
-pub fn render_sphere<T: IsShape>() {
+pub fn render_sphere() {
     let sphere = Sphere::with_attributes(
         Matrix::scaling(400.0, 400.0, 500.0).translate(500.0, 500.0, 0.0),
         Material::with_colour(Colour::new(0.5, 0.2, 1.0)),

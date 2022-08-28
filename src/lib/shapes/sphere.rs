@@ -7,7 +7,7 @@ use crate::{
     matrix::matrix::Matrix,
 };
 
-use super::shape::{HasMaterial, HasNormal, HasTransform, IsShape};
+use super::shape::{HasMaterial, HasNormal, HasTransform};
 
 #[derive(Debug)]
 pub struct Sphere {
@@ -42,7 +42,6 @@ impl Sphere {
     }
 }
 
-impl IsShape for Sphere{}
 
 impl HasNormal for Sphere {
     fn normal_at(&self, world_point: Tup) -> Option<Tup> {

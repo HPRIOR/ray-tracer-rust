@@ -12,4 +12,3 @@ pub trait HasMaterial {
     fn material(&self) -> &Material;
 }
 
-pub trait IsShape: HasTransform + HasNormal + HasMaterial {}

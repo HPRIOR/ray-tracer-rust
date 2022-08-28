@@ -1,26 +1,24 @@
 #![allow(dead_code, unused_variables, unreachable_patterns)]
 
+use crate::shapes::shape::HasNormal;
 use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
     matrix::matrix::Matrix,
     shapes::shape::HasTransform,
     utils::math_ext::Square,
 };
-use crate::shapes::shape::HasNormal;
 
 // ----------- Intersection ----------- //
 
 #[derive(Debug)]
-pub struct Intersection<'a, T: HasNormal> {
+pub struct Intersection<'a, T> {
+    // type will have to be more constrained if intersection imlements any members which make use
+    // of the object
     pub at: f64,
-    // not sure having a enum to hold the object reference is the best solution.
-    // when more objects are introduced it will be necessary to pattern match over all
-    // possibilities and essentially apply the same logic on them. It should be a reference to some
-    // object which implements an 'Object/Shape Trait'
     pub object: &'a T,
 }
 
-impl<'a, T: HasNormal> Intersection<'a, T> {
+impl<'a, T> Intersection<'a, T> {
     pub fn new(at: f64, object: &'a T) -> Self {
         Self { at, object }
     }
@@ -31,7 +29,7 @@ pub trait Hit {
     fn hit(&self) -> Option<&Self::Output>;
 }
 
-impl<'a, T: HasNormal> Hit for Vec<Intersection<'a, T>> {
+impl<'a, T> Hit for Vec<Intersection<'a, T>> {
     type Output = Intersection<'a, T>;
 
     fn hit(&self) -> Option<&Self::Output> {
@@ -73,9 +71,10 @@ impl Ray {
         self.direction.mul(t).add(self.origin)
     }
 
-    /// Values are where the sphere is intersected on the ray from the origin or None if no
-    /// intersection
-    pub fn intersect<'a, T: HasTransform + HasNormal>(&'a self, shape: &'a T) -> Vec<Intersection<T>> {
+    pub fn intersect<'a, T: HasTransform>(
+        &'a self,
+        shape: &'a T,
+    ) -> Vec<Intersection<T>> {
         if let Some(sphere_transform) = shape.transform().inverse() {
             let new_ray = self.transform(&sphere_transform);
             let sphere_to_ray = new_ray.origin.sub(point(0.0, 0.0, 0.0));

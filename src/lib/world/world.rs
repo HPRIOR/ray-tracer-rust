@@ -6,18 +6,15 @@ use crate::{
     material::material::Material,
     matrix::matrix::Matrix,
     ray::ray::{Ray, Intersection},
-    shapes::{sphere::Sphere, shape::{HasTransform, HasNormal, IsShape}},
+    shapes::{sphere::Sphere, shape::{HasTransform, HasNormal}},
 };
 
-enum WorldObject {
-    Sphere(Sphere),
-}
-struct World<T: HasTransform + HasNormal> {
+struct World<T: HasTransform> {
     pub objects: Vec<T>,
     pub light: PointLight,
 }
 
-impl<'a, T: IsShape> World<T> {
+impl<'a, T:HasTransform> World<T> {
     pub fn intersect_world(&'a self, ray: &'a Ray) -> Vec<Intersection<'a, T>> {
         let mut result: Vec<Intersection<'a, T>> = self
             .objects
@@ -52,7 +49,6 @@ mod test {
         geometry::vector::{point, vector},
         matrix::matrix::Matrix,
         ray::ray::Ray,
-        world::world::WorldObject,
     };
 
     use super::World;
