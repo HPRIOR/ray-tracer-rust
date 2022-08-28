@@ -1,6 +1,6 @@
 use crate::{
     canvas::canvas::Canvas,
-    exercises::shared::shared::{degrees_to_radians, set_pixel, Coord, save_canvas},
+    exercises::shared::shared::{degrees_to_radians, save_canvas, set_pixel, Coord},
     geometry::vector::point,
     matrix::matrix::{Axis, Matrix},
 };

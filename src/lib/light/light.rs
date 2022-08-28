@@ -1,15 +1,16 @@
 #![allow(dead_code)]
-use crate::{geometry::vector::Tup, colour::colour::Colour};
+use crate::{colour::colour::Colour, geometry::vector::Tup};
 
-pub struct PointLight{
+pub struct PointLight {
     pub position: Tup,
-    pub intensity: Colour
+    pub intensity: Colour,
 }
 
-impl PointLight{
-    pub fn new(position: Tup, intensity: Colour) -> Self{
+impl PointLight {
+    pub fn new(position: Tup, intensity: Colour) -> Self {
         Self {
-            position, intensity
+            position,
+            intensity,
         }
     }
 }

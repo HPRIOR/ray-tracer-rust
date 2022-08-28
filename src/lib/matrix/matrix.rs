@@ -1,7 +1,5 @@
 #![allow(dead_code)]
 
-
-
 use crate::geometry::vector::Tup;
 
 type MatrixVec = Vec<Vec<f64>>;
@@ -158,9 +156,8 @@ impl Matrix {
                     (0..width)
                         .map(move |j| (i, j))
                         .map(|(i, j)| {
-                            (0..length).fold(0.0, |acc, x| {
-                                acc + self.matrix[i][x] * rhs.matrix[x][j]
-                            })
+                            (0..length)
+                                .fold(0.0, |acc, x| acc + self.matrix[i][x] * rhs.matrix[x][j])
                         })
                         .collect()
                 })
@@ -169,8 +166,7 @@ impl Matrix {
     }
 
     pub fn mul_tup(&self, rhs: Tup) -> Tup {
-        fn multiply_row(row: &Vec<f64>, tuple: Tup) -> f64
-        {
+        fn multiply_row(row: &Vec<f64>, tuple: Tup) -> f64 {
             row[0] * tuple.0 + row[1] * tuple.1 + row[2] * tuple.2 + row[3] * tuple.3
         }
 

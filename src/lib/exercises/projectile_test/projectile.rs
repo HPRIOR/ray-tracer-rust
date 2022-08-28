@@ -1,16 +1,19 @@
-use crate::{geometry::vector::{Operations, Vector}, canvas::canvas::Canvas, colour::colour::Colour};
-
+use crate::{
+    canvas::canvas::Canvas,
+    colour::colour::Colour,
+    geometry::vector::{Operations, Vector},
+};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Projectile {
     pub position: (f64, f64, f64, f64),
-    pub velocity: (f64,f64,f64,f64),
+    pub velocity: (f64, f64, f64, f64),
 }
 
 #[derive(Clone, Copy)]
 pub struct Env {
-    pub gravity: (f64, f64,f64,f64),
-    pub wind: (f64,f64,f64,f64),
+    pub gravity: (f64, f64, f64, f64),
+    pub wind: (f64, f64, f64, f64),
 }
 
 /*
@@ -23,7 +26,6 @@ pub fn tick(env: Env, proj: Projectile) -> Projectile {
     let velocity = proj.velocity.add(env.gravity).add(env.wind);
     return Projectile { position, velocity };
 }
-
 
 pub fn create_projectile_canvas(file_name: &str) {
     let canvas_height = 500;

@@ -7,7 +7,7 @@ use crate::{
     material::material::Material,
     matrix::matrix::Matrix,
     ray::ray::{Hit, Ray, TIntersection},
-    shapes::{sphere::Sphere, shape::Shape},
+    shapes::{shape::Shape, sphere::Sphere},
 };
 use rayon::prelude::*;
 
@@ -42,7 +42,8 @@ pub fn render_sphere() {
                 let sphere = hit.object();
                 let normal = sphere.normal_at(p);
                 let eye = ray.direction.neg();
-                let colour = normal.map(|normal| sphere.material().lighting(p, &light, eye, normal));
+                let colour =
+                    normal.map(|normal| sphere.material().lighting(p, &light, eye, normal));
                 Some((colour, Coord { x: p.0, y: p.1 }))
             } else {
                 None

@@ -271,9 +271,8 @@ mod tests {
     #[test]
     fn reflect_off_slanted_surface() {
         let v = vector(0.0, -1.0, 0.0);
-        let n = vector(2.0_f64.sqrt() / 2.0 , 2.0_f64.sqrt() / 2.0, 0.0);
+        let n = vector(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
         let sut = v.reflect(n);
         sut.approx_eq(vector(1.0, 0.0, 0.0));
-
     }
 }

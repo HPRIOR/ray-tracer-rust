@@ -23,7 +23,6 @@ impl<'a> Intersection<'a> {
     pub fn as_trait(at: f64, object: &'a Box<dyn Shape + 'a>) -> Box<dyn TIntersection<'a> + 'a> {
         Box::new(Self { at, object })
     }
-
 }
 
 pub trait TIntersection<'a> {
@@ -90,7 +89,10 @@ impl Ray {
     }
 
     // this will need to change for runtime polymorphism. Should return Box<dyn Hit>
-    pub fn intersect<'a>(&'a self, shape: &'a Box<dyn Shape + 'a>) -> Vec<Box<dyn TIntersection<'a> + 'a>> {
+    pub fn intersect<'a>(
+        &'a self,
+        shape: &'a Box<dyn Shape + 'a>,
+    ) -> Vec<Box<dyn TIntersection<'a> + 'a>> {
         if let Some(sphere_transform) = shape.transform().inverse() {
             let new_ray = self.transform(&sphere_transform);
             let sphere_to_ray = new_ray.origin.sub(point(0.0, 0.0, 0.0));
@@ -110,7 +112,7 @@ impl Ray {
             let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
 
             let i1: Box<dyn TIntersection<'a>> = Intersection::as_trait(t1, shape);
-            let i2 : Box<dyn TIntersection<'a>> = Intersection::as_trait(t2, shape);
+            let i2: Box<dyn TIntersection<'a>> = Intersection::as_trait(t2, shape);
             vec![i1, i2]
         } else {
             vec![]
@@ -289,7 +291,7 @@ mod tests {
     fn correct_hit_when_all_intersections_all_intersections_have_negative_t() {
         let s: Box<dyn Shape> = Sphere::as_trait();
         let i1: Box<dyn TIntersection> = Intersection::as_trait(-1.0, &s);
-        let i2 :Box<dyn TIntersection> = Intersection::as_trait(-1.0, &s);
+        let i2: Box<dyn TIntersection> = Intersection::as_trait(-1.0, &s);
         let xs = vec![i1, i2];
         let sut = xs.hit();
         assert!(sut.is_none());

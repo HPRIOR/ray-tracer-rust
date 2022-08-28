@@ -10,6 +10,4 @@ pub mod shapes;
 pub mod utils;
 pub mod world;
 
-pub fn lib_entry(){
-    
-}
+pub fn lib_entry() {}

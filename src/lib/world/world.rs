@@ -5,8 +5,8 @@ use crate::{
     light::light::PointLight,
     material::material::Material,
     matrix::matrix::Matrix,
-    ray::ray::{Ray, Intersection, TIntersection},
-    shapes::{sphere::Sphere, shape::Shape},
+    ray::ray::{Intersection, Ray, TIntersection},
+    shapes::{shape::Shape, sphere::Sphere},
 };
 
 struct World {
@@ -16,13 +16,8 @@ struct World {
 
 impl<'a> World {
     pub fn intersect_world(&'a self, ray: &'a Ray) -> Vec<Box<dyn TIntersection<'a> + 'a>> {
-        let mut result: Vec<Box<dyn TIntersection<'a>>> = self
-            .objects
-            .iter()
-            .flat_map(|o| 
-                ray.intersect(o)
-            )
-            .collect();
+        let mut result: Vec<Box<dyn TIntersection<'a>>> =
+            self.objects.iter().flat_map(|o| ray.intersect(o)).collect();
         result.sort_by(|a, b| a.at().total_cmp(&b.at()));
         result
     }

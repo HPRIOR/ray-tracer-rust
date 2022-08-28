@@ -45,7 +45,7 @@ impl Add for Colour {
     }
 }
 
-impl Add<f64> for Colour{
+impl Add<f64> for Colour {
     type Output = Colour;
 
     fn add(self, rhs: f64) -> Self::Output {
