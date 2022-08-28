@@ -10,7 +10,7 @@ use crate::{
 // ----------- Intersection ----------- //
 
 pub struct Intersection<'a> {
-    // type will have to be more constrained if intersection imlements any members which make use
+    // type will have to be more constrained if intersection implements any members which make use
     // of the object
     pub at: f64,
     pub object: &'a Box<dyn Shape + 'a>,
@@ -181,14 +181,14 @@ mod tests {
         let sphere: Box<dyn Shape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.len() == 2);
+        assert_eq!(xs.len(), 2);
 
         assert_eq!(xs[0].at(), 4.0);
         assert_eq!(xs[1].at(), 6.0);
     }
 
     #[test]
-    fn intersects_a_sphere_at_tengent() {
+    fn intersects_a_sphere_at_tangent() {
         let origin = point(0.0, 1.0, -5.0);
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
@@ -196,7 +196,7 @@ mod tests {
         let sphere: Box<dyn Shape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.len() == 2);
+        assert_eq!(xs.len(), 2);
 
         assert_eq!(xs[0].at(), 5.0);
         assert_eq!(xs[1].at(), 5.0);
@@ -211,7 +211,7 @@ mod tests {
         let sphere: Box<dyn Shape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.len() == 0);
+        assert_eq!(xs.len(), 0);
     }
 
     #[test]
@@ -223,7 +223,7 @@ mod tests {
         let sphere: Box<dyn Shape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.len() == 2);
+        assert_eq!(xs.len(), 2);
 
         assert_eq!(xs[0].at(), -1.0);
         assert_eq!(xs[1].at(), 1.0);
@@ -238,7 +238,7 @@ mod tests {
         let sphere: Box<dyn Shape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
-        assert!(xs.len() == 2);
+        assert_eq!(xs.len(), 2);
 
         assert_eq!(xs[0].at(), -6.0);
         assert_eq!(xs[1].at(), -4.0);
@@ -251,7 +251,7 @@ mod tests {
         let ray = Ray::new(origin, direction);
         let sphere: Box<dyn Shape> = Sphere::as_trait();
         let sut = ray.intersect(&sphere);
-        assert!(sut.len() == 2);
+        assert_eq!(sut.len(), 2);
 
         let o1 = sut[0].object();
         let o2 = sut[1].object();
@@ -331,7 +331,7 @@ mod tests {
         let s: Box<dyn Shape> = Sphere::as_trait_with_transform(m);
         let xs = r1.intersect(&s);
 
-        assert!(xs.len() == 2);
+        assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].at(), 3.0);
         assert_eq!(xs[1].at(), 7.0);
     }
@@ -342,7 +342,7 @@ mod tests {
         let s: Box<dyn Shape> = Sphere::as_trait_with_transform(m);
         let xs = r1.intersect(&s);
 
-        assert!(xs.len() == 0);
+        assert_eq!(xs.len(), 0);
     }
 
     #[test]

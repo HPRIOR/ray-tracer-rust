@@ -62,6 +62,10 @@ impl Vector for Tup {
         )
     }
 
+    fn reflect(self, normal: Self::Output) -> Self::Output {
+        self.sub(normal.mul(2.0).mul(self.dot(normal)))
+    }
+
     fn x(self) -> f64 {
         self.0
     }
@@ -72,10 +76,6 @@ impl Vector for Tup {
 
     fn z(self) -> f64 {
         self.2
-    }
-
-    fn reflect(self, normal: Self::Output) -> Self::Output {
-        self.sub(normal.mul(2.0).mul(self.dot(normal)))
     }
 }
 
@@ -189,35 +189,35 @@ mod tests {
     }
 
     #[test]
-    fn vector_with_x_of_one_will_have_one_magniute() {
+    fn vector_with_x_of_one_will_have_one_magnitude() {
         let v1 = vector(1.0, 0.0, 0.0);
         let result = v1.length();
         assert_eq!(1.0, result)
     }
 
     #[test]
-    fn vector_with_y_of_one_will_have_one_magniute() {
+    fn vector_with_y_of_one_will_have_one_magnitude() {
         let v1 = vector(0.0, 1.0, 0.0);
         let result = v1.length();
         assert_eq!(1.0, result)
     }
 
     #[test]
-    fn vector_with_z_of_one_will_have_one_magniute() {
+    fn vector_with_z_of_one_will_have_one_magnitude() {
         let v1 = vector(0.0, 0.0, 1.0);
         let result = v1.length();
         assert_eq!(1.0, result)
     }
 
     #[test]
-    fn vector_one_two_three_will_have_sqrt_14_magnitute() {
+    fn vector_one_two_three_will_have_sqrt_14_magnitude() {
         let v1 = vector(1.0, 2.0, 3.0);
         let result = v1.length();
         assert_eq!(14.0_f64.sqrt(), result)
     }
 
     #[test]
-    fn negative_vector_will_have_correct_magnitute() {
+    fn negative_vector_will_have_correct_magnitude() {
         let v1 = vector(-1.0, -2.0, -3.0);
         let result = v1.length();
         assert_eq!(14.0_f64.sqrt(), result)

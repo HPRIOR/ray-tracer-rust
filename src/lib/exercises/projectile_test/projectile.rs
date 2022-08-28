@@ -15,7 +15,7 @@ pub struct Env {
 
 /*
  * The position is increased by the velocity each time
- * The velocity is redueced due to wind and gravity until
+ * The velocity is reduced due to wind and gravity until
  * should expect an arch
  * */
 pub fn tick(env: Env, proj: Projectile) -> Projectile {

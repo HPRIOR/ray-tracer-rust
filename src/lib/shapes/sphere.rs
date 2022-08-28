@@ -151,7 +151,7 @@ mod tests {
     }
 
     #[test]
-    fn normal_at_nonaxial_point() {
+    fn normal_at_non_axial_point() {
         let s = Sphere::new();
         let sut = s.normal_at(point(
             (3.0_f64).sqrt() / 3.0,

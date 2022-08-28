@@ -169,16 +169,16 @@ impl Matrix {
     }
 
     pub fn mul_tup(&self, rhs: Tup) -> Tup {
-        fn muliply_row(row: &Vec<f64>, tuple: Tup) -> f64
+        fn multiply_row(row: &Vec<f64>, tuple: Tup) -> f64
         {
             row[0] * tuple.0 + row[1] * tuple.1 + row[2] * tuple.2 + row[3] * tuple.3
         }
 
         (
-            muliply_row(&self.matrix[0], rhs),
-            muliply_row(&self.matrix[1], rhs),
-            muliply_row(&self.matrix[2], rhs),
-            muliply_row(&self.matrix[3], rhs),
+            multiply_row(&self.matrix[0], rhs),
+            multiply_row(&self.matrix[1], rhs),
+            multiply_row(&self.matrix[2], rhs),
+            multiply_row(&self.matrix[3], rhs),
         )
     }
 
@@ -397,7 +397,7 @@ mod tests {
     }
 
     #[test]
-    fn transpose_of_idendity_is_identidy() {
+    fn transpose_of_identity_is_identity() {
         let ident: Matrix = Matrix::ident();
         let sut = ident.transpose();
         assert_eq!(sut, ident)
@@ -492,7 +492,7 @@ mod tests {
     }
 
     #[test]
-    fn invertable_matrix_is_invertable() {
+    fn invertible_matrix_is_invertible() {
         let matrix = Matrix::new(vec![
             vec![6.0, 4.0, 4.0, 4.0],
             vec![5.0, 5.0, 7.0, 6.0],
@@ -504,7 +504,7 @@ mod tests {
     }
 
     #[test]
-    fn non_invertable_matrix_is_not_invertable() {
+    fn non_invertible_matrix_is_not_invertible() {
         let matrix = Matrix::new(vec![
             vec![-4.0, 2.0, -2.0, -3.0],
             vec![9.0, 6.0, 2.0, 6.0],
@@ -646,7 +646,7 @@ mod tests {
     }
 
     #[test]
-    fn shearing_transormation_moves_x_in_proportion_to_y() {
+    fn shearing_transformation_moves_x_in_proportion_to_y() {
         let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
         let shearing_trans = Matrix::shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         let sut = shearing_trans.mul_tup(p1);
@@ -655,7 +655,7 @@ mod tests {
     }
 
     #[test]
-    fn shearing_transormation_moves_x_in_proportion_to_z() {
+    fn shearing_transformation_moves_x_in_proportion_to_z() {
         let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
         let shearing_trans = Matrix::shearing(0.0, 1.0, 0.0, 0.0, 0.0, 0.0);
         let sut = shearing_trans.mul_tup(p1);
@@ -664,7 +664,7 @@ mod tests {
     }
 
     #[test]
-    fn shearing_transormation_moves_y_in_proportion_to_x() {
+    fn shearing_transformation_moves_y_in_proportion_to_x() {
         let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
         let shearing_trans = Matrix::shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
         let sut = shearing_trans.mul_tup(p1);
@@ -673,7 +673,7 @@ mod tests {
     }
 
     #[test]
-    fn shearing_transormation_moves_y_in_proportion_to_z() {
+    fn shearing_transformation_moves_y_in_proportion_to_z() {
         let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
         let shearing_trans = Matrix::shearing(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
         let sut = shearing_trans.mul_tup(p1);
@@ -682,7 +682,7 @@ mod tests {
     }
 
     #[test]
-    fn shearing_transormation_moves_z_in_proportion_to_x() {
+    fn shearing_transformation_moves_z_in_proportion_to_x() {
         let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
         let shearing_trans = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
         let sut = shearing_trans.mul_tup(p1);
@@ -691,7 +691,7 @@ mod tests {
     }
 
     #[test]
-    fn shearing_transormation_moves_z_in_proportion_to_y() {
+    fn shearing_transformation_moves_z_in_proportion_to_y() {
         let p1: (f64, f64, f64, f64) = point(2.0, 3.0, 4.0);
         let shearing_trans = Matrix::shearing(0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let sut = shearing_trans.mul_tup(p1);

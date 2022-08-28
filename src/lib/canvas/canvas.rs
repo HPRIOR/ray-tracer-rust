@@ -185,7 +185,7 @@ mod tests {
     }
 
     #[test]
-    fn line_will_be_limited_with_large_word_on_boundry() {
+    fn line_will_be_limited_with_large_word_on_boundary() {
         let input = String::from(
             "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 00000 0 0 0 0",
         );
@@ -199,7 +199,7 @@ mod tests {
     }
 
     #[test]
-    fn line_will_be_limited_multuple_times() {
+    fn line_will_be_limited_multiple_times() {
         let input = String::from(
             "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 00000 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 00000 0 0 0 0",
         );
