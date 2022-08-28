@@ -88,7 +88,6 @@ impl Ray {
         self.direction.mul(t).add(self.origin)
     }
 
-    // this will need to change for runtime polymorphism. Should return Box<dyn Hit>
     pub fn intersect<'a>(
         &'a self,
         shape: &'a Box<dyn Shape + 'a>,
