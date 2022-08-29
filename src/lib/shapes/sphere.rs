@@ -7,7 +7,7 @@ use crate::{
     matrix::matrix::Matrix,
 };
 
-use super::shape::Shape;
+use super::shape::TShape;
 
 #[derive(Debug)]
 pub struct Sphere {
@@ -46,7 +46,7 @@ impl Sphere {
         }
     }
 
-    pub fn as_trait() -> Box<dyn Shape> {
+    pub fn as_trait() -> Box<dyn TShape> {
         Box::new(Self {
             id: Uuid::new_v4(),
             transform: Matrix::ident(),
@@ -54,7 +54,7 @@ impl Sphere {
         })
     }
 
-    pub fn as_trait_with_transform(translation: Matrix) -> Box<dyn Shape> {
+    pub fn as_trait_with_transform(translation: Matrix) -> Box<dyn TShape> {
         Box::new(Self {
             id: Uuid::new_v4(),
             transform: translation,
@@ -62,7 +62,7 @@ impl Sphere {
         })
     }
 
-    pub fn as_trait_with_attr(translation: Matrix, material: Material) -> Box<dyn Shape> {
+    pub fn as_trait_with_attr(translation: Matrix, material: Material) -> Box<dyn TShape> {
         Box::new(Self {
             id: Uuid::new_v4(),
             transform: translation,
@@ -71,7 +71,7 @@ impl Sphere {
     }
 }
 
-impl Shape for Sphere {
+impl TShape for Sphere {
     fn material(&self) -> &Material {
         &self.material
     }
@@ -103,7 +103,7 @@ mod tests {
     use crate::{
         geometry::vector::{point, vector},
         matrix::matrix::{Axis, Matrix},
-        shapes::shape::Shape,
+        shapes::shape::TShape,
         utils::test::ApproxEq,
     };
 

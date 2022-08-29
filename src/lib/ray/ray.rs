@@ -1,6 +1,8 @@
 #![allow(dead_code, unused_variables, unreachable_patterns)]
 
-use crate::shapes::shape::Shape;
+use crate::colour::colour::Colour;
+use crate::light::light::PointLight;
+use crate::shapes::shape::TShape;
 use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
     matrix::matrix::Matrix,
@@ -9,25 +11,25 @@ use crate::{
 
 // ----------- Intersection ----------- //
 
+/// Holds information about where a ray has intersected an object. It contains a reference to the
+/// hit object
 pub struct Intersection<'a> {
-    // type will have to be more constrained if intersection implements any members which make use
-    // of the object
     pub at: f64,
-    pub object: &'a Box<dyn Shape + 'a>,
+    pub object: &'a Box<dyn TShape + 'a>,
 }
 
 impl<'a> Intersection<'a> {
-    pub fn new(at: f64, object: &'a Box<dyn Shape + 'a>) -> Self {
+    pub fn new(at: f64, object: &'a Box<dyn TShape + 'a>) -> Self {
         Self { at, object }
     }
-    pub fn as_trait(at: f64, object: &'a Box<dyn Shape + 'a>) -> Box<dyn TIntersection<'a> + 'a> {
+    pub fn as_trait(at: f64, object: &'a Box<dyn TShape + 'a>) -> Box<dyn TIntersection<'a> + 'a> {
         Box::new(Self { at, object })
     }
 }
 
 pub trait TIntersection<'a> {
     fn at(&self) -> f64;
-    fn object(&self) -> &'a Box<dyn Shape + 'a>;
+    fn object(&self) -> &'a Box<dyn TShape + 'a>;
 }
 
 impl<'a> TIntersection<'a> for Intersection<'a> {
@@ -35,7 +37,7 @@ impl<'a> TIntersection<'a> for Intersection<'a> {
         self.at
     }
 
-    fn object(&self) -> &'a Box<dyn Shape + 'a> {
+    fn object(&self) -> &'a Box<dyn TShape + 'a> {
         self.object
     }
 }
@@ -65,11 +67,20 @@ impl<'a> Hit for Vec<Box<dyn TIntersection<'a> + 'a>> {
 }
 
 // ----------- PreComp ----------- //
-struct PreComp<'a> {
-    object: &'a Box<dyn Shape + 'a>,
+pub struct PreComp<'a> {
+    object: &'a Box<dyn TShape + 'a>,
     point: Tup,
     eye_v: Tup,
     norm_v: Tup,
+    inside: bool,
+}
+
+impl<'a> PreComp<'a> {
+    pub fn shade_hit(&self, light_source: &PointLight) -> Colour {
+        self.object
+            .material()
+            .lighting(self.point, light_source, self.eye_v, self.norm_v)
+    }
 }
 
 // ----------- Ray ----------- //
@@ -88,9 +99,11 @@ impl Ray {
         self.direction.mul(t).add(self.origin)
     }
 
+    // The logic for intersects will have to change depending on the shape. The logic will
+    // need to be delegated to the TShape trait: Tshape fn (&ray) -> Vec<Box<dyn TIntersection>>
     pub fn intersect<'a>(
         &'a self,
-        shape: &'a Box<dyn Shape + 'a>,
+        shape: &'a Box<dyn TShape + 'a>,
     ) -> Vec<Box<dyn TIntersection<'a> + 'a>> {
         if let Some(sphere_transform) = shape.transform().inverse() {
             let new_ray = self.transform(&sphere_transform);
@@ -118,7 +131,18 @@ impl Ray {
         }
     }
 
-    fn prepare_computations<'a>(
+    /// Returns a list of intersections ordered from nearest to farthest
+    pub fn intersect_objects<'a>(
+        &'a self,
+        shapes: &'a Vec<Box<dyn TShape>>,
+    ) -> Vec<Box<dyn TIntersection<'a> + 'a>> {
+        let mut result: Vec<Box<dyn TIntersection<'a>>> =
+            shapes.iter().flat_map(|o| self.intersect(o)).collect();
+        result.sort_by(|a, b| a.at().total_cmp(&b.at()));
+        result
+    }
+
+    pub fn prepare_computations<'a>(
         &'a self,
         intersection: &Box<dyn TIntersection<'a> + 'a>,
     ) -> Option<PreComp> {
@@ -126,11 +150,18 @@ impl Ray {
         let p = self.position(intersection.at());
         let eye_v = self.direction.neg();
         let norm_v_opt = object.normal_at(p);
-        norm_v_opt.map(|norm_v| PreComp {
-            object,
-            point: p,
-            eye_v,
-            norm_v,
+
+        norm_v_opt.map(|norm_v| {
+            // if hit occurs inside the shape then we must invert the normal
+            let is_inside = norm_v.dot(eye_v) < 0.0;
+
+            PreComp {
+                object,
+                point: p,
+                eye_v,
+                norm_v: if is_inside { norm_v.neg() } else { norm_v },
+                inside: is_inside,
+            }
         })
     }
 
@@ -145,10 +176,12 @@ impl Ray {
 #[cfg(test)]
 mod tests {
     use crate::{
+        colour::colour::Colour,
         geometry::vector::{point, vector},
+        material::material::Material,
         matrix::matrix::Matrix,
         ray::ray::TIntersection,
-        shapes::{shape::Shape, sphere::Sphere},
+        shapes::{shape::TShape, sphere::Sphere},
     };
 
     use super::{Hit, Intersection, Ray};
@@ -179,7 +212,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn Shape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
         assert_eq!(xs.len(), 2);
@@ -194,7 +227,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn Shape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
         assert_eq!(xs.len(), 2);
@@ -209,7 +242,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn Shape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
         assert_eq!(xs.len(), 0);
@@ -221,7 +254,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn Shape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
         assert_eq!(xs.len(), 2);
@@ -236,7 +269,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn Shape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::as_trait();
 
         let xs = ray.intersect(&sphere);
         assert_eq!(xs.len(), 2);
@@ -250,14 +283,14 @@ mod tests {
         let origin = point(0.0, 0.0, -5.0);
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let sphere: Box<dyn Shape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::as_trait();
         let sut = ray.intersect(&sphere);
         assert_eq!(sut.len(), 2);
 
         let o1 = sut[0].object();
         let o2 = sut[1].object();
 
-        let other_sphere: Box<dyn Shape> = Sphere::as_trait();
+        let other_sphere: Box<dyn TShape> = Sphere::as_trait();
 
         assert!(std::ptr::eq(o1, o2));
         assert!(std::ptr::eq(o1, &sphere));
@@ -268,7 +301,7 @@ mod tests {
 
     #[test]
     fn correct_hit_when_all_intersections_have_positive_t() {
-        let s: Box<dyn Shape> = Sphere::as_trait();
+        let s: Box<dyn TShape> = Sphere::as_trait();
         let i1: Box<dyn TIntersection> = Intersection::as_trait(1.0, &s);
         let i2: Box<dyn TIntersection> = Intersection::as_trait(2.0, &s);
         let xs = vec![i1, i2];
@@ -278,7 +311,7 @@ mod tests {
 
     #[test]
     fn correct_hit_when_all_intersections_some_intersections_have_negative_t() {
-        let s: Box<dyn Shape> = Sphere::as_trait();
+        let s: Box<dyn TShape> = Sphere::as_trait();
         let i1: Box<dyn TIntersection> = Intersection::as_trait(-1.0, &s);
         let i2: Box<dyn TIntersection> = Intersection::as_trait(1.0, &s);
         let xs = vec![i1, i2];
@@ -288,7 +321,7 @@ mod tests {
 
     #[test]
     fn correct_hit_when_all_intersections_all_intersections_have_negative_t() {
-        let s: Box<dyn Shape> = Sphere::as_trait();
+        let s: Box<dyn TShape> = Sphere::as_trait();
         let i1: Box<dyn TIntersection> = Intersection::as_trait(-1.0, &s);
         let i2: Box<dyn TIntersection> = Intersection::as_trait(-1.0, &s);
         let xs = vec![i1, i2];
@@ -298,7 +331,7 @@ mod tests {
 
     #[test]
     fn hit_is_lowest_non_negative_intersection() {
-        let s: Box<dyn Shape> = Sphere::as_trait();
+        let s: Box<dyn TShape> = Sphere::as_trait();
         let i1: Box<dyn TIntersection> = Intersection::as_trait(5.0, &s);
         let i2: Box<dyn TIntersection> = Intersection::as_trait(7.0, &s);
         let i3: Box<dyn TIntersection> = Intersection::as_trait(-3.0, &s);
@@ -329,7 +362,7 @@ mod tests {
     fn intersecting_scaled_sphere_with_a_ray() {
         let r1 = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let m = Matrix::scaling(2.0, 2.0, 2.0);
-        let s: Box<dyn Shape> = Sphere::as_trait_with_transform(m);
+        let s: Box<dyn TShape> = Sphere::as_trait_with_transform(m);
         let xs = r1.intersect(&s);
 
         assert_eq!(xs.len(), 2);
@@ -340,7 +373,7 @@ mod tests {
     fn intersecting_translated_sphere_with_a_ray() {
         let r1 = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let m = Matrix::translation(5.0, 0.0, 0.0);
-        let s: Box<dyn Shape> = Sphere::as_trait_with_transform(m);
+        let s: Box<dyn TShape> = Sphere::as_trait_with_transform(m);
         let xs = r1.intersect(&s);
 
         assert_eq!(xs.len(), 0);
@@ -349,7 +382,7 @@ mod tests {
     #[test]
     fn precomputing_intersection_state() {
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
-        let shape: Box<dyn Shape> = Sphere::as_trait();
+        let shape: Box<dyn TShape> = Sphere::as_trait();
         let i: Box<dyn TIntersection> = Box::new(Intersection {
             at: 4.0,
             object: &shape,
@@ -363,5 +396,45 @@ mod tests {
         assert_eq!(comps.point, point(0.0, 0.0, -1.0));
         assert_eq!(comps.eye_v, vector(0.0, 0.0, -1.0));
         assert_eq!(comps.norm_v, vector(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn inside_is_false_when_intersection_occurs_on_the_outsied() {
+        let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+        let shape = Sphere::as_trait();
+        let i = Intersection::as_trait(4.0, &shape);
+        let comps = ray.prepare_computations(&i).unwrap();
+        assert_eq!(comps.inside, false);
+    }
+
+    #[test]
+    fn intersection_when_intersection_occurs_on_the_inside() {
+        let ray = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
+        let shape = Sphere::as_trait();
+        let i = Intersection::as_trait(1.0, &shape);
+        let comps = ray.prepare_computations(&i).unwrap();
+
+        assert_eq!(comps.point, point(0.0, 0.0, 1.0));
+        assert_eq!(comps.eye_v, vector(0.0, 0.0, -1.0));
+        assert_eq!(comps.inside, true);
+        assert_eq!(comps.norm_v, vector(0.0, 0.0, -1.0));
+    }
+
+    #[test]
+    fn can_get_ordered_intersects_with_multiple_objects() {
+        let s1 = Sphere::as_trait_with_attr(
+            Matrix::ident(),
+            Material::new(0.1, 0.7, 0.2, 200.0, Colour::new(0.8, 1.0, 0.6)),
+        );
+        let s2 = Sphere::as_trait_with_transform(Matrix::scaling(0.5, 0.5, 0.5));
+        let objects = vec![s1, s2];
+        let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
+
+        let sut = ray.intersect_objects(&objects);
+        assert_eq!(sut.len(), 4);
+        assert_eq!(sut[0].at(), 4.0);
+        assert_eq!(sut[1].at(), 4.5);
+        assert_eq!(sut[2].at(), 5.5);
+        assert_eq!(sut[3].at(), 6.0);
     }
 }

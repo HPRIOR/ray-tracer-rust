@@ -7,12 +7,12 @@ use crate::{
     material::material::Material,
     matrix::matrix::Matrix,
     ray::ray::{Hit, Ray, TIntersection},
-    shapes::{shape::Shape, sphere::Sphere},
+    shapes::{shape::TShape, sphere::Sphere},
 };
 use rayon::prelude::*;
 
 pub fn render_sphere() {
-    let sphere: Box<dyn Shape> = Sphere::as_trait_with_attr(
+    let sphere: Box<dyn TShape> = Sphere::as_trait_with_attr(
         Matrix::scaling(400.0, 400.0, 500.0).translate(500.0, 500.0, 0.0),
         Material::with_colour(Colour::new(0.5, 0.2, 1.0)),
     );

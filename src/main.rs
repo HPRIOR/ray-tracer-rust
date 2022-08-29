@@ -11,5 +11,5 @@ use module_lib::{
 fn main() {
     //create_projectile_canvas("projectile");
     // create_clock();
-    render_sphere();
+    // render_sphere();
 }
