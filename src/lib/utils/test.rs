@@ -1,6 +1,6 @@
 use core::panic;
 
-use crate::{colour::colour::Colour, geometry::vector::Tup};
+use crate::{colour::colour::Colour, geometry::vector::Tup, matrix::matrix::Matrix};
 
 trait ToU32 {
     fn to_u32(&self) -> u32;
@@ -36,6 +36,21 @@ impl ApproxEq for Colour {
             compare(self.blue, other.blue),
         ];
         evaluate_result_list(&compare_list);
+    }
+}
+
+impl ApproxEq for Matrix {
+    type Type = Self;
+
+    fn approx_eq(self, other: Self::Type) {
+        let result_list: Vec<Result<(), String>> = (0..self.len())
+            .flat_map(|i| {
+                (0..self.len())
+                    .map(move |j| (i, j))
+                    .map(|(i, j)| compare(self.get(i, j), other.get(i, j)))
+            })
+            .collect();
+        evaluate_result_list(&result_list)
     }
 }
 

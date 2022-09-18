@@ -1,6 +1,6 @@
-#![allow(dead_code)]
+#![allow(dead_code,unused_variables)]
 
-use crate::geometry::vector::Tup;
+use crate::geometry::vector::{Operations, Tup, Vector};
 
 type MatrixVec = Vec<Vec<f64>>;
 
@@ -16,8 +16,12 @@ pub enum Axis {
 }
 
 impl Matrix {
-    fn new(matrix: MatrixVec) -> Self {
+    pub fn new(matrix: MatrixVec) -> Self {
         Self { matrix }
+    }
+
+    pub fn len(&self) -> usize {
+        self.matrix[0].len()
     }
 
     pub fn ident() -> Self {
@@ -29,6 +33,22 @@ impl Matrix {
                 vec![0.0, 0.0, 0.0, 1.0],
             ],
         }
+    }
+
+    fn view_transform(from: Tup, to: Tup, up: Tup) -> Self {
+        let forward = (to.sub(from)).norm();
+        let upn = up.norm();
+        let left = forward.cross_prod(upn);
+        let true_up = left.cross_prod(forward);
+        let orientation = Self {
+            matrix: vec![
+                vec![left.0, left.1, left.2, 0.0],
+                vec![true_up.0, true_up.1, true_up.2, 0.0],
+                vec![-forward.0, -forward.1, -forward.2, 0.0],
+                vec![0.0, 0.0, 0.0, 1.0],
+            ],
+        };
+        orientation.mul(&Matrix::translation(-from.0, -from.1, -from.2))
     }
 
     pub fn scaling(x: f64, y: f64, z: f64) -> Self {
@@ -61,7 +81,7 @@ impl Matrix {
         Matrix::translation(x, y, z).mul(&self)
     }
 
-    fn get(&self, row: usize, col: usize) -> f64 {
+    pub fn get(&self, row: usize, col: usize) -> f64 {
         self.matrix[row][col]
     }
 
@@ -731,5 +751,46 @@ mod tests {
             .translate(10.0, 5.0, 7.0);
         let expected = transform.mul_tup(p1);
         expected.approx_eq(point(15.0, 0.0, 7.0));
+    }
+
+    #[test]
+    fn transform_matrix_for_default_orientation_is_ident() {
+        let from = point(0.0, 0.0, 0.0);
+        let to = point(0.0, 0.0, -1.0);
+        let up = vector(0.0, 1.0, 0.0);
+        let sut = Matrix::view_transform(from, to, up);
+        assert_eq!(sut, Matrix::ident());
+    }
+    #[test]
+    fn view_transform_matrix_looking_in_positive_z_direction() {
+        let from = point(0.0, 0.0, 0.0);
+        let to = point(0.0, 0.0, 1.0);
+        let up = vector(0.0, 1.0, 0.0);
+        let sut = Matrix::view_transform(from, to, up);
+        assert_eq!(sut, Matrix::scaling(-1.0, 1.0, -1.0));
+    }
+    #[test]
+    fn view_transform_moves_the_world() {
+        let from = point(0.0, 0.0, 8.0);
+        let to = point(0.0, 0.0, 0.0);
+        let up = vector(0.0, 1.0, 0.0);
+        let sut = Matrix::view_transform(from, to, up);
+        assert_eq!(sut, Matrix::translation(0.0, 0.0, -8.0));
+    }
+
+    #[test]
+    fn arbitrary_view_transform_is_correct() {
+        let from = point(1.0, 3.0, 2.0);
+        let to = point(4.0, -2.0, 8.0);
+        let up = vector(1.0, 1.0, 0.0);
+        let sut = Matrix::view_transform(from, to, up);
+        let matrix = Matrix::new(vec![
+            vec![-0.50709, 0.50709, 0.67612, -2.36643],
+            vec![0.76772, 0.60609, 0.12122, -2.82843],
+            vec![-0.35857, 0.59761, -0.71714, 0.0],
+            vec![0.0, 0.0, 0.0, 1.0],
+        ]);
+
+       sut.approx_eq(matrix);
     }
 }

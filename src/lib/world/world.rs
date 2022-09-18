@@ -1,7 +1,7 @@
 #![allow(unused_imports, unused_variables, dead_code)]
 use crate::{
     colour::colour::Colour,
-    geometry::vector::point,
+    geometry::vector::{point, Operations, Tup, Vector},
     light::light::PointLight,
     material::material::Material,
     matrix::matrix::Matrix,
@@ -17,9 +17,9 @@ use crate::{
  * There is a cyclic dependency between them. Need to think of a way to organise the code to stop
  * this. There are other dependencies like this too.
  * If intersect world does not need to be used by anything else in World, then Ray should
- * encapsulate the retrieval of intersections, and just return pre-comps. 
- * 
- * 
+ * encapsulate the retrieval of intersections, and just return pre-comps.
+ *
+ *
  */
 
 struct World {
@@ -29,7 +29,8 @@ struct World {
 
 impl<'a> World {
     pub fn color_at(&'a self, ray: &'a Ray) -> Colour {
-        let intersections: Vec<Box<dyn TIntersection<'a> + 'a>> = ray.intersect_objects(&self.objects);
+        let intersections: Vec<Box<dyn TIntersection<'a> + 'a>> =
+            ray.intersect_objects(&self.objects);
         let maybe_intersection = intersections.get(0);
 
         let maybe_shade_hit = maybe_intersection
@@ -57,6 +58,7 @@ impl Default for World {
         }
     }
 }
+
 
 #[cfg(test)]
 mod test {

@@ -35,6 +35,8 @@ pub fn render_sphere() {
     let hit_coords: Vec<(Option<Colour>, Coord)> = rays
         .par_iter()
         .filter_map(|ray| {
+            // i'm not sure if this needs to be dynamic. The intersection itself holds a dynamic
+            // reference. Hit could be defined on a Vec<Intersection>
             let intersections: Vec<Box<dyn TIntersection>> = ray.intersect(&sphere);
             let hit = intersections.hit();
             if let Some(hit) = hit {
