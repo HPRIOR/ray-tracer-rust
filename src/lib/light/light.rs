@@ -1,9 +1,18 @@
 #![allow(dead_code)]
-use crate::{colour::colour::Colour, geometry::vector::Tup};
+use crate::{colour::colour::Colour, geometry::vector::{Tup, point}};
 
 pub struct PointLight {
     pub position: Tup,
     pub intensity: Colour,
+}
+
+impl Default for PointLight {
+    fn default() -> Self {
+        Self {
+            position: point(-10.0, 10.0, -10.0),
+            intensity: Colour::white(),
+        }
+    }
 }
 
 impl PointLight {

@@ -86,7 +86,7 @@ impl<'a> PreComp<'a> {
 // ----------- Ray ----------- //
 #[derive(Debug)]
 pub struct Ray {
-    origin: Tup,
+    pub origin: Tup,
     pub direction: Tup,
 }
 
@@ -101,6 +101,7 @@ impl Ray {
 
     // The logic for intersects will have to change depending on the shape. The logic will
     // need to be delegated to the TShape trait: Tshape fn (&ray) -> Vec<Box<dyn TIntersection>>
+    // not sure that the intersect needs to be a trait if they already reference the TShape trait
     pub fn intersect<'a>(
         &'a self,
         shape: &'a Box<dyn TShape + 'a>,
@@ -123,15 +124,15 @@ impl Ray {
             let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
             let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
 
-            let i1: Box<dyn TIntersection<'a>> = Intersection::as_trait(t1, shape);
-            let i2: Box<dyn TIntersection<'a>> = Intersection::as_trait(t2, shape);
+            let i1 = Intersection::as_trait(t1, shape);
+            let i2 = Intersection::as_trait(t2, shape);
             vec![i1, i2]
         } else {
             vec![]
         }
     }
 
-    /// Returns a list of intersections ordered from nearest to farthest
+    /// Returns a vector of intersections ordered from nearest to farthest
     pub fn intersect_objects<'a>(
         &'a self,
         shapes: &'a Vec<Box<dyn TShape>>,

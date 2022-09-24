@@ -18,16 +18,19 @@ use crate::{
  * this. There are other dependencies like this too.
  * If intersect world does not need to be used by anything else in World, then Ray should
  * encapsulate the retrieval of intersections, and just return pre-comps.
- *
- *
  */
 
-struct World {
+pub struct World {
     pub objects: Vec<Box<dyn TShape>>,
     pub light: PointLight,
 }
 
 impl<'a> World {
+    pub fn new(objects: Vec<Box<dyn TShape>>, light: PointLight ) -> Self{
+        Self{
+            objects, light
+        }
+    }
     pub fn color_at(&'a self, ray: &'a Ray) -> Colour {
         let intersections: Vec<Box<dyn TIntersection<'a> + 'a>> =
             ray.intersect_objects(&self.objects);
@@ -54,11 +57,10 @@ impl Default for World {
         let s2 = Sphere::as_trait_with_transform(Matrix::scaling(0.5, 0.5, 0.5));
         Self {
             objects: vec![s1, s2],
-            light: PointLight::new(point(-10.0, 10.0, -10.0), Colour::white()),
+            light: PointLight::default()
         }
     }
 }
-
 
 #[cfg(test)]
 mod test {

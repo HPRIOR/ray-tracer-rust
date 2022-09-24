@@ -54,6 +54,15 @@ impl ApproxEq for Matrix {
     }
 }
 
+impl ApproxEq for f64{
+    type Type = f64;
+
+    fn approx_eq(self, other: Self::Type) {
+        let result = compare(self, other);
+        _ = result.map_err(|err| panic!("{}",err));
+    }
+}
+
 fn compare(a: f64, b: f64) -> Result<(), String> {
     let epsilon = 0.00001;
     let diff = (a - b).abs();
@@ -139,5 +148,15 @@ mod tests {
     fn minus_one_can_be_compared() {
         let sut = compare(-1.0, -1.0);
         assert!(sut.is_ok());
+    }
+
+    #[test]
+    fn approx_floats_no_panic(){
+        0.01.approx_eq(0.009999999999998);
+    }
+    #[test]
+    #[should_panic]
+    fn approx_floats_will_panic(){
+        0.01.approx_eq(0.00099999999998);
     }
 }

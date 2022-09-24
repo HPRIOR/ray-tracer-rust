@@ -1,4 +1,4 @@
-#![allow(dead_code,unused_variables)]
+#![allow(dead_code, unused_variables)]
 
 use crate::geometry::vector::{Operations, Tup, Vector};
 
@@ -35,7 +35,7 @@ impl Matrix {
         }
     }
 
-    fn view_transform(from: Tup, to: Tup, up: Tup) -> Self {
+    pub fn view_transform(from: Tup, to: Tup, up: Tup) -> Self {
         let forward = (to.sub(from)).norm();
         let upn = up.norm();
         let left = forward.cross_prod(upn);
@@ -166,7 +166,7 @@ impl Matrix {
         }
     }
 
-    fn mul(&self, rhs: &Matrix) -> Self {
+    pub fn mul(&self, rhs: &Matrix) -> Self {
         let length = self.matrix.len();
         let width = rhs.matrix[0].len();
 
@@ -198,7 +198,7 @@ impl Matrix {
         )
     }
 
-    fn rotation(around: Axis, radians: f64) -> Self {
+    pub fn rotation(around: Axis, radians: f64) -> Self {
         match around {
             Axis::X => Self {
                 matrix: vec![
@@ -791,6 +791,6 @@ mod tests {
             vec![0.0, 0.0, 0.0, 1.0],
         ]);
 
-       sut.approx_eq(matrix);
+        sut.approx_eq(matrix);
     }
 }

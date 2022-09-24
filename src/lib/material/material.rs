@@ -10,7 +10,7 @@ use crate::{
     light::light::PointLight,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Material {
     pub ambient: f64,
     pub diffuse: f64,
@@ -19,7 +19,63 @@ pub struct Material {
     pub colour: Colour,
 }
 
+pub struct MaterialBuilder {
+    ambient: f64,
+    diffuse: f64,
+    specular: f64,
+    shininess: f64,
+    colour: Colour,
+}
+
+impl Default for MaterialBuilder {
+    fn default() -> Self {
+        Self {
+            ambient: 0.1,
+            diffuse: 0.9,
+            specular: 0.9,
+            shininess: 200.0,
+            colour: Colour::new(1.0, 1.0, 1.0),
+        }
+    }
+}
+
+impl MaterialBuilder {
+    pub fn build(self) -> Material {
+        Material {
+            ambient: self.ambient,
+            diffuse: self.diffuse,
+            specular: self.specular,
+            shininess: self.shininess,
+            colour: self.colour,
+        }
+    }
+
+    pub fn with_ambient(mut self, ambient: f64) ->  MaterialBuilder {
+        self.ambient = ambient;
+        self
+    }
+    pub fn with_diffuse(mut self, diffuse: f64) ->  MaterialBuilder {
+        self.diffuse = diffuse;
+        self
+    }
+    pub fn with_specular(mut self, specular: f64) ->  MaterialBuilder {
+        self.specular = specular;
+        self
+    }
+    pub fn with_shininess(mut self, shininess: f64) ->  MaterialBuilder {
+        self.shininess = shininess;
+        self
+    }
+    pub fn with_colour(mut self, colour: Colour) -> MaterialBuilder {
+        self.colour = colour;
+        self
+    }
+}
+
 impl Material {
+    pub fn builder() -> MaterialBuilder{
+        MaterialBuilder::default()
+    }
     pub fn new(ambient: f64, diffuse: f64, specular: f64, shininess: f64, colour: Colour) -> Self {
         Self {
             ambient,

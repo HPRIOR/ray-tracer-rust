@@ -7,7 +7,48 @@ use crate::{
     matrix::matrix::Matrix,
 };
 
-use super::shape::TShape;
+use super::shape::{TShape, TShapeBuilder};
+
+pub struct SphereBuilder {
+    transform: Option<Matrix>,
+    material: Option<Material>,
+}
+
+impl Default for SphereBuilder {
+    fn default() -> Self {
+        Self {
+            transform: Default::default(),
+            material: Default::default(),
+        }
+    }
+}
+
+impl SphereBuilder{
+    fn new() -> Self {
+        SphereBuilder::default()
+    }
+}
+
+impl TShapeBuilder for SphereBuilder {
+
+    fn with_transform(mut self, matrix: Matrix) ->  SphereBuilder {
+        self.transform = Some(matrix);
+        self
+    }
+
+    fn with_material(mut self, material: Material) -> SphereBuilder {
+        self.material = Some(material);
+        self
+    }
+
+    fn build(self) -> Box<dyn TShape> {
+        Box::new(Sphere {
+            id: Uuid::new_v4(),
+            transform: self.transform.unwrap_or(Matrix::ident()),
+            material: self.material.unwrap_or(Material::default()),
+        })
+    }
+}
 
 #[derive(Debug)]
 pub struct Sphere {
@@ -22,6 +63,10 @@ pub enum As {
 }
 
 impl Sphere {
+    pub fn builder() -> SphereBuilder{
+        SphereBuilder::default()
+    }
+
     pub fn new() -> Self {
         Self {
             id: Uuid::new_v4(),
