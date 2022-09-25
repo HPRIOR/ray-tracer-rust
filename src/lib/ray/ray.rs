@@ -1,5 +1,6 @@
 #![allow(dead_code, unused_variables, unreachable_patterns)]
 
+
 use crate::colour::colour::Colour;
 use crate::light::light::PointLight;
 use crate::shapes::shape::TShape;
@@ -69,17 +70,18 @@ impl<'a> Hit for Vec<Box<dyn TIntersection<'a> + 'a>> {
 // ----------- PreComp ----------- //
 pub struct PreComp<'a> {
     object: &'a Box<dyn TShape + 'a>,
-    point: Tup,
+    pub point: Tup,
+    pub over_point: Tup,
     eye_v: Tup,
     norm_v: Tup,
     inside: bool,
 }
 
 impl<'a> PreComp<'a> {
-    pub fn shade_hit(&self, light_source: &PointLight) -> Colour {
+    pub fn shade_hit(&self, light_source: &PointLight, is_shadow: bool) -> Colour {
         self.object
             .material()
-            .lighting(self.point, light_source, self.eye_v, self.norm_v)
+            .lighting(self.point, light_source, self.eye_v, self.norm_v, is_shadow)
     }
 }
 
@@ -106,8 +108,8 @@ impl Ray {
         &'a self,
         shape: &'a Box<dyn TShape + 'a>,
     ) -> Vec<Box<dyn TIntersection<'a> + 'a>> {
-        if let Some(sphere_transform) = shape.transform().inverse() {
-            let new_ray = self.transform(&sphere_transform);
+        if let Some(shape_transform) = shape.transform().inverse() {
+            let new_ray = self.transform(&shape_transform);
             let sphere_to_ray = new_ray.origin.sub(point(0.0, 0.0, 0.0));
 
             let a = new_ray.direction.dot(new_ray.direction);
@@ -143,7 +145,7 @@ impl Ray {
         result
     }
 
-    pub fn prepare_computations<'a>(
+    pub fn prep_comps<'a>(
         &'a self,
         intersection: &Box<dyn TIntersection<'a> + 'a>,
     ) -> Option<PreComp> {
@@ -152,21 +154,24 @@ impl Ray {
         let eye_v = self.direction.neg();
         let norm_v_opt = object.normal_at(p);
 
+
         norm_v_opt.map(|norm_v| {
             // if hit occurs inside the shape then we must invert the normal
             let is_inside = norm_v.dot(eye_v) < 0.0;
+            let norm_v_result = if is_inside { norm_v.neg() } else { norm_v };
 
             PreComp {
                 object,
                 point: p,
+                over_point: p.add(norm_v_result.mul(0.00001)),
                 eye_v,
-                norm_v: if is_inside { norm_v.neg() } else { norm_v },
+                norm_v: norm_v_result,
                 inside: is_inside,
             }
         })
     }
 
-    fn transform(&self, transform: &Matrix) -> Self {
+    pub fn transform(&self, transform: &Matrix) -> Self {
         Self {
             origin: transform.mul_tup(self.origin),
             direction: transform.mul_tup(self.direction),
@@ -388,7 +393,7 @@ mod tests {
             at: 4.0,
             object: &shape,
         });
-        let comps = ray.prepare_computations(&i).unwrap();
+        let comps = ray.prep_comps(&i).unwrap();
         let comps_obj = comps.object;
         let intersect_obj = i.object();
         // intersect and precom reference the same obj
@@ -404,7 +409,7 @@ mod tests {
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::as_trait();
         let i = Intersection::as_trait(4.0, &shape);
-        let comps = ray.prepare_computations(&i).unwrap();
+        let comps = ray.prep_comps(&i).unwrap();
         assert_eq!(comps.inside, false);
     }
 
@@ -413,7 +418,7 @@ mod tests {
         let ray = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::as_trait();
         let i = Intersection::as_trait(1.0, &shape);
-        let comps = ray.prepare_computations(&i).unwrap();
+        let comps = ray.prep_comps(&i).unwrap();
 
         assert_eq!(comps.point, point(0.0, 0.0, 1.0));
         assert_eq!(comps.eye_v, vector(0.0, 0.0, -1.0));

@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use crate::{colour::colour::Colour, geometry::vector::{Tup, point}};
 
+#[derive(Clone)]
 pub struct PointLight {
     pub position: Tup,
     pub intensity: Colour,

@@ -61,7 +61,7 @@ fn render_world() {
         .with_transform(
             Matrix::ident()
                 .scale(0.5, 0.5, 0.5)
-                .translate(1.5, 0.5, -0.5),
+                .translate(-0.5, 1.5, -0.5),
         )
         .with_material(
             Material::builder()
@@ -110,6 +110,6 @@ mod tests {
 
     #[test]
     fn run() {
-        render_world();
+        // render_world();
     }
 }

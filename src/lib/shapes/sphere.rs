@@ -5,6 +5,7 @@ use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
     material::material::Material,
     matrix::matrix::Matrix,
+    ray::ray::{Ray, TIntersection, Intersection}, utils::math_ext::Square,
 };
 
 use super::shape::{TShape, TShapeBuilder};
@@ -23,15 +24,14 @@ impl Default for SphereBuilder {
     }
 }
 
-impl SphereBuilder{
+impl SphereBuilder {
     fn new() -> Self {
         SphereBuilder::default()
     }
 }
 
 impl TShapeBuilder for SphereBuilder {
-
-    fn with_transform(mut self, matrix: Matrix) ->  SphereBuilder {
+    fn with_transform(mut self, matrix: Matrix) -> SphereBuilder {
         self.transform = Some(matrix);
         self
     }
@@ -63,7 +63,7 @@ pub enum As {
 }
 
 impl Sphere {
-    pub fn builder() -> SphereBuilder{
+    pub fn builder() -> SphereBuilder {
         SphereBuilder::default()
     }
 
@@ -114,6 +114,10 @@ impl Sphere {
             material,
         })
     }
+
+    fn to_trait(&self) -> Box<&dyn TShape>{
+        Box::new(self)
+    }
 }
 
 impl TShape for Sphere {
@@ -138,6 +142,32 @@ impl TShape for Sphere {
                 .map(|p| p.mul_tup(object_norm))
         });
         world_normal.map(|p| (p.0, p.1, p.2, 0.0).norm())
+    }
+
+    fn local_intersect(&self, ray: &Ray) -> Vec<Box<dyn TIntersection>> {
+        todo!()
+        // let new_ray = ray.transform(&self.transform());
+        // let shape_to_ray = new_ray.origin.sub(point(0.0, 0.0, 0.0));
+        //
+        // let a = new_ray.direction.dot(new_ray.direction);
+        // let b = (new_ray.direction.dot(shape_to_ray)) * 2.0;
+        // let c = shape_to_ray.dot(shape_to_ray) - 1.0;
+        //
+        // // if negative then ray misses - no intersection
+        // let discriminant = b.squared() - 4.0 * a * c;
+        //
+        // if discriminant < 0.0 {
+        //     return vec![];
+        // }
+        //
+        // let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
+        // let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
+        //
+        //
+        // todo!();
+        // let i1 = Intersection::as_trait(t1, Box::new(self));
+        // let i2 = Intersection::as_trait(t2, Box::new(self));
+        // vec![i1, i2]
     }
 }
 
