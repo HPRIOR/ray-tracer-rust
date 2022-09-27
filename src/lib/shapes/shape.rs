@@ -2,16 +2,16 @@ use crate::{
     geometry::vector::Tup,
     material::material::Material,
     matrix::matrix::Matrix,
-    ray::ray::{Ray, TIntersection},
+    ray::ray::{Ray, Intersection},
 };
 
 pub trait TShape: Sync + Send{
     fn material(&self) -> &Material;
     fn transform(&self) -> &Matrix;
     fn normal_at(&self, point: Tup) -> Option<Tup>;
-    fn local_intersect(&self, ray: &Ray) -> Vec<Box<dyn TIntersection>>;
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection>;
 
-    fn intersect(&self, ray: &Ray) -> Vec<Box<dyn TIntersection>> {
+    fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let maybe_shape_transform = self.transform().inverse();
         if let Some(shape_tranform) = maybe_shape_transform {
             let local_ray = ray.transform(&shape_tranform);

@@ -76,9 +76,9 @@ impl Camera {
                 (0..self.h_size)
                     .into_par_iter()
                     .map(|x| {
-                        let ray = self.ray_for_pixel(x as f64, y as f64);
+                        let maybe_ray = self.ray_for_pixel(x as f64, y as f64);
                         let result: Option<(usize, usize, Colour)> =
-                            ray.map(|r| world.color_at(&r)).map(|c| (x, y, c));
+                            maybe_ray.map(|r| world.color_at(&r)).map(|c| (x, y, c));
                         result
                     })
                     .collect::<Vec<Option<(usize, usize, Colour)>>>()

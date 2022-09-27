@@ -6,7 +6,7 @@ use crate::{
     light::light::PointLight,
     material::material::Material,
     matrix::matrix::Matrix,
-    ray::ray::{Hit, Ray, TIntersection},
+    ray::ray::{Hit, Ray, Intersection},
     shapes::{shape::TShape, sphere::Sphere},
 };
 use rayon::prelude::*;
@@ -37,11 +37,11 @@ pub fn render_sphere() {
         .filter_map(|ray| {
             // i'm not sure if this needs to be dynamic. The intersection itself holds a dynamic
             // reference. Hit could be defined on a Vec<Intersection>
-            let intersections: Vec<Box<dyn TIntersection>> = ray.intersect(&sphere);
+            let intersections: Vec<Intersection> = ray.intersect(&sphere);
             let hit = intersections.hit();
             if let Some(hit) = hit {
-                let p = ray.position(hit.at());
-                let sphere = hit.object();
+                let p = ray.position(hit.at);
+                let sphere = hit.object;
                 let normal = sphere.normal_at(p);
                 let eye = ray.direction.neg();
                 let colour =

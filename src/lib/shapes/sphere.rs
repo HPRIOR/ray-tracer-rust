@@ -5,7 +5,7 @@ use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
     material::material::Material,
     matrix::matrix::Matrix,
-    ray::ray::{Ray, TIntersection, Intersection}, utils::math_ext::Square,
+    ray::ray::{Ray, Intersection}
 };
 
 use super::shape::{TShape, TShapeBuilder};
@@ -144,7 +144,7 @@ impl TShape for Sphere {
         world_normal.map(|p| (p.0, p.1, p.2, 0.0).norm())
     }
 
-    fn local_intersect(&self, ray: &Ray) -> Vec<Box<dyn TIntersection>> {
+    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection> {
         todo!()
         // let new_ray = ray.transform(&self.transform());
         // let shape_to_ray = new_ray.origin.sub(point(0.0, 0.0, 0.0));
