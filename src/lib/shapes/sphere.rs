@@ -5,7 +5,7 @@ use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
     material::material::Material,
     matrix::matrix::Matrix,
-    ray::ray::{Ray, Intersection}
+    ray::ray::{Intersection, Ray},
 };
 
 use super::shape::{TShape, TShapeBuilder};
@@ -115,7 +115,7 @@ impl Sphere {
         })
     }
 
-    fn to_trait(&self) -> Box<&dyn TShape>{
+    fn to_trait(&self) -> Box<&dyn TShape> {
         Box::new(self)
     }
 }

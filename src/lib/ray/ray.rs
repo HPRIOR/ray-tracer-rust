@@ -24,15 +24,6 @@ impl<'a> Intersection<'a> {
     }
 }
 
-impl<'a> Intersection<'a> {
-    fn at(&self) -> f64 {
-        self.at
-    }
-
-    fn object(&self) -> &'a Box<dyn TShape + 'a> {
-        self.object
-    }
-}
 
 pub trait Hit {
     type Output;
@@ -49,11 +40,11 @@ impl<'a> Hit for Vec<Intersection<'a>> {
         };
 
         let mut positive_intersections: Vec<&Self::Output> =
-            self.into_iter().filter(|i| i.at() > 0.0).collect();
+            self.into_iter().filter(|i| i.at > 0.0).collect();
         if positive_intersections.len() == 0 {
             return None;
         }
-        positive_intersections.sort_by(|a, b| a.at().total_cmp(&b.at()));
+        positive_intersections.sort_by(|a, b| a.at.total_cmp(&b.at));
         Some(&positive_intersections[0])
     }
 }
@@ -133,13 +124,13 @@ impl Ray {
     ) -> Vec<Intersection<'a>> {
         let mut result: Vec<Intersection<'a>> =
             shapes.iter().flat_map(|o| self.intersect(o)).collect();
-        result.sort_by(|a, b| a.at().total_cmp(&b.at()));
+        result.sort_by(|a, b| a.at.total_cmp(&b.at));
         result
     }
 
     pub fn prep_comps<'a>(&'a self, intersection: &Intersection<'a>) -> Option<PreComp> {
-        let object = intersection.object();
-        let p = self.position(intersection.at());
+        let object = intersection.object;
+        let p = self.position(intersection.at);
         let eye_v = self.direction.neg();
         let maybe_norm_v = object.normal_at(p);
 
@@ -210,8 +201,8 @@ mod tests {
         let xs = ray.intersect(&sphere);
         assert_eq!(xs.len(), 2);
 
-        assert_eq!(xs[0].at(), 4.0);
-        assert_eq!(xs[1].at(), 6.0);
+        assert_eq!(xs[0].at, 4.0);
+        assert_eq!(xs[1].at, 6.0);
     }
 
     #[test]
@@ -225,8 +216,8 @@ mod tests {
         let xs = ray.intersect(&sphere);
         assert_eq!(xs.len(), 2);
 
-        assert_eq!(xs[0].at(), 5.0);
-        assert_eq!(xs[1].at(), 5.0);
+        assert_eq!(xs[0].at, 5.0);
+        assert_eq!(xs[1].at, 5.0);
     }
 
     #[test]
@@ -252,8 +243,8 @@ mod tests {
         let xs = ray.intersect(&sphere);
         assert_eq!(xs.len(), 2);
 
-        assert_eq!(xs[0].at(), -1.0);
-        assert_eq!(xs[1].at(), 1.0);
+        assert_eq!(xs[0].at, -1.0);
+        assert_eq!(xs[1].at, 1.0);
     }
 
     #[test]
@@ -267,8 +258,8 @@ mod tests {
         let xs = ray.intersect(&sphere);
         assert_eq!(xs.len(), 2);
 
-        assert_eq!(xs[0].at(), -6.0);
-        assert_eq!(xs[1].at(), -4.0);
+        assert_eq!(xs[0].at, -6.0);
+        assert_eq!(xs[1].at, -4.0);
     }
 
     #[test]
@@ -280,8 +271,8 @@ mod tests {
         let sut = ray.intersect(&sphere);
         assert_eq!(sut.len(), 2);
 
-        let o1 = sut[0].object();
-        let o2 = sut[1].object();
+        let o1 = sut[0].object;
+        let o2 = sut[1].object;
 
         let other_sphere: Box<dyn TShape> = Sphere::as_trait();
 
@@ -359,8 +350,8 @@ mod tests {
         let xs = r1.intersect(&s);
 
         assert_eq!(xs.len(), 2);
-        assert_eq!(xs[0].at(), 3.0);
-        assert_eq!(xs[1].at(), 7.0);
+        assert_eq!(xs[0].at, 3.0);
+        assert_eq!(xs[1].at, 7.0);
     }
     #[test]
     fn intersecting_translated_sphere_with_a_ray() {
@@ -382,7 +373,7 @@ mod tests {
         };
         let comps = ray.prep_comps(&i).unwrap();
         let comps_obj = comps.object;
-        let intersect_obj = i.object();
+        let intersect_obj = i.object;
         // intersect and precom reference the same obj
         assert!(std::ptr::eq(comps_obj, intersect_obj));
 
@@ -425,9 +416,9 @@ mod tests {
 
         let sut = ray.intersect_objects(&objects);
         assert_eq!(sut.len(), 4);
-        assert_eq!(sut[0].at(), 4.0);
-        assert_eq!(sut[1].at(), 4.5);
-        assert_eq!(sut[2].at(), 5.5);
-        assert_eq!(sut[3].at(), 6.0);
+        assert_eq!(sut[0].at, 4.0);
+        assert_eq!(sut[1].at, 4.5);
+        assert_eq!(sut[2].at, 5.5);
+        assert_eq!(sut[3].at, 6.0);
     }
 }
