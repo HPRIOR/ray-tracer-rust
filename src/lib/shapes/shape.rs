@@ -9,20 +9,17 @@ pub trait TShape: Sync + Send{
     fn material(&self) -> &Material;
     fn transform(&self) -> &Matrix;
     fn normal_at(&self, point: Tup) -> Option<Tup>;
-    fn local_intersect(&self, ray: &Ray) -> Vec<Intersection>;
+    fn shape_intersect(&self, ray: &Ray) -> Vec<Intersection>;
 
     fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
         let maybe_shape_transform = self.transform().inverse();
-        if let Some(shape_tranform) = maybe_shape_transform {
-            let local_ray = ray.transform(&shape_tranform);
-            return self.local_intersect(&local_ray);
+        if let Some(shape_transform) = maybe_shape_transform {
+            let local_ray = ray.transform(&shape_transform);
+            return self.shape_intersect(&local_ray);
         }
         return vec![];
     }
+
+    fn to_trait_ref(&self) -> Box<&dyn TShape>;
 }
 
-pub trait TShapeBuilder: Sync + Send  {
-    fn with_transform(self, matrix: Matrix) -> Self;
-    fn with_material(self, material: Material) -> Self;
-    fn build(self) -> Box<dyn TShape>;
-}

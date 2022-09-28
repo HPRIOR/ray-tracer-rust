@@ -9,7 +9,7 @@ use crate::{
     light::light::PointLight,
     material::material::Material,
     matrix::matrix::{Axis, Matrix},
-    shapes::{shape::TShapeBuilder, sphere::Sphere},
+    shapes::sphere::Sphere,
     world::world::World,
 };
 
@@ -22,7 +22,7 @@ fn render_world() {
     let floor = Sphere::builder()
         .with_transform(Matrix::scaling(10.0, 0.01, 10.0))
         .with_material(bg_mat)
-        .build();
+        .build_as_trait();
 
     let l_wall = Sphere::builder()
         .with_transform(
@@ -33,7 +33,7 @@ fn render_world() {
                 .translate(0.0, 0.0, 5.0),
         )
         .with_material(bg_mat)
-        .build();
+        .build_as_trait();
 
     let r_wall = Sphere::builder()
         .with_transform(
@@ -44,7 +44,7 @@ fn render_world() {
                 .translate(0.0, 0.0, 5.0),
         )
         .with_material(bg_mat)
-        .build();
+        .build_as_trait();
 
     let middle = Sphere::builder()
         .with_transform(Matrix::ident().translate(-0.5, 1.0, 0.5))
@@ -55,7 +55,7 @@ fn render_world() {
                 .with_specular(0.3)
                 .build(),
         )
-        .build();
+        .build_as_trait();
 
     let right = Sphere::builder()
         .with_transform(
@@ -70,7 +70,7 @@ fn render_world() {
                 .with_specular(0.3)
                 .build(),
         )
-        .build();
+        .build_as_trait();
 
     let left = Sphere::builder()
         .with_transform(
@@ -85,14 +85,14 @@ fn render_world() {
                 .with_specular(0.3)
                 .build(),
         )
-        .build();
+        .build_as_trait();
 
     let world = World::new(
         vec![right, left, middle, floor, l_wall, r_wall],
         PointLight::new(point(-10.0, 10.0, -10.0), Colour::white()),
     );
 
-    let mut camera = Camera::new(1000, 500, PI / 3.0);
+    let mut camera = Camera::new(500, 250, PI / 3.0);
     camera.transform = Matrix::view_transform(
         point(0.0, 1.5, -5.0),
         point(0.0, 1.0, 0.0),

@@ -5,7 +5,7 @@ use crate::{
     light::light::PointLight,
     material::material::Material,
     matrix::matrix::Matrix,
-    ray::ray::{Hit, Intersection, PreComp, Ray },
+    ray::ray::{Hit, Intersection, PreComp, Ray},
     shapes::{shape::TShape, sphere::Sphere},
 };
 
@@ -14,33 +14,16 @@ pub struct World {
     pub light: PointLight,
 }
 
-// refactor.
-// shapes will be responsible for returning where a ray intersects them 
-// intersections and prepcomps containing references to shapes is hard to manage and is complicated
-// consider another way. 
-//
-// Currently a cast ray can be used to derive the first intersection with the world(objects). The
-// hit object is references in that intersection, and is then used in prepare computations. Prepare
-// computations has a shade_hit method, which calls an object's material.lighting method. This is
-// currently the only reason to maintain a reference to the hit object.
-//
-// World could maintain a map of uuids -> objects. Intersections and precomputations could
-// reference this to get access to the object's material and lighting methods
-//
-// Intersections would no longer need to reference TShape, but uuid mapping into TShape dict.
-// precomp.shade_hit could take in a &T impl TShape 
-// intersection.shade_hit would also need to take an &T impl TShape in order to derive some of
-// PreComps fields (also used in shade_hit).
-
-
-impl<'a> World {
+impl World {
     pub fn new(objects: Vec<Box<dyn TShape>>, light: PointLight) -> Self {
         Self { objects, light }
     }
 
-    pub fn color_at(&'a self, ray: &'a Ray) -> Colour {
-        let intersections: Vec<Intersection<'a>> =
-            ray.intersect_objects(&self.objects);
+    pub fn color_at(&self, ray: &Ray) -> Colour {
+        let trait_refs: Vec<Box<&dyn TShape>> =
+            self.objects.iter().map(|o| o.to_trait_ref()).collect();
+
+        let intersections: Vec<Intersection> = ray.intersect_objects(&trait_refs);
 
         let maybe_intersection = intersections.get(0);
 
@@ -62,7 +45,11 @@ impl<'a> World {
 
         // cast ray between light source and ray intersection point
         let ray = Ray::new(point, direction);
-        let maybe_intersect = ray.intersect_objects(&self.objects);
+
+        let trait_refs: Vec<Box<&dyn TShape>> =
+            self.objects.iter().map(|o| o.to_trait_ref()).collect();
+
+        let maybe_intersect = ray.intersect_objects(&trait_refs);
         let maybe_hit = maybe_intersect.hit();
 
         maybe_hit.map(|h| h.at < distance).unwrap_or(false)
@@ -92,7 +79,7 @@ mod test {
         light::{self, light::PointLight},
         matrix::matrix::Matrix,
         ray::ray::{Intersection, Ray},
-        shapes::{shape::TShapeBuilder, sphere::Sphere},
+        shapes::{shape::TShape, sphere::Sphere},
         utils::test::ApproxEq,
         world,
     };
@@ -118,7 +105,9 @@ mod test {
     fn can_get_world_intersects() {
         let world = World::default();
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
-        let sut = ray.intersect_objects(&world.objects);
+        let trait_refs: Vec<Box<&dyn TShape>> =
+            world.objects.iter().map(|o| o.to_trait_ref()).collect();
+        let sut = ray.intersect_objects(&trait_refs);
         assert_eq!(sut.len(), 4);
         assert_eq!(sut[0].at, 4.0);
         assert_eq!(sut[1].at, 4.5);
@@ -130,7 +119,7 @@ mod test {
         let w = World::default();
         let r = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = &w.objects[0];
-        let i = Intersection::new(4.0, shape);
+        let i = Intersection::new(4.0, shape.to_trait_ref());
         let comp = r.prep_comps(&i).unwrap();
         let c = comp.shade_hit(&w.light, false);
         c.approx_eq(Colour::new(0.38066, 0.47583, 0.2855));
@@ -141,7 +130,7 @@ mod test {
         w.light = PointLight::new(point(0.0, 0.25, 0.0), Colour::white());
         let r = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         let shape = &w.objects[1];
-        let i = Intersection::new(0.5, shape);
+        let i = Intersection::new(0.5, shape.to_trait_ref());
         let comp = r.prep_comps(&i).unwrap();
         let c = comp.shade_hit(&w.light, false);
         c.approx_eq(Colour::new(0.90498, 0.90498, 0.90498));
@@ -152,17 +141,17 @@ mod test {
         let s1 = Sphere::as_trait();
         let s2 = Sphere::builder()
             .with_transform(Matrix::translation(0.0, 0.0, 10.0))
-            .build();
+            .build_as_trait();
         let s2_copy = Sphere::builder()
             .with_transform(Matrix::translation(0.0, 0.0, 10.0))
-            .build();
+            .build_as_trait();
 
         let light = PointLight::new(point(0.0, 0.0, -10.0), Colour::white());
 
         let world = World::new(vec![s1, s2], light.clone());
 
         let ray = Ray::new(point(0.0, 0.0, 5.0), vector(0.0, 0.0, 1.0));
-        let intersect = Intersection::new(4.0, &s2_copy);
+        let intersect = Intersection::new(4.0, s2_copy.to_trait_ref());
         let comps = ray.prep_comps(&intersect).unwrap();
         let shade_hit = comps.shade_hit(&light.clone(), world.is_shadowed(comps.point));
         shade_hit.approx_eq(Colour::new(0.1, 0.1, 0.1));
@@ -173,12 +162,11 @@ mod test {
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::builder()
             .with_transform(Matrix::translation(0.0, 0.0, 1.0))
-            .build();
-        let intersection = Intersection::new(5.0, &shape);
+            .build_as_trait();
+        let intersection = Intersection::new(5.0, shape.to_trait_ref());
         let comps = ray.prep_comps(&intersection).unwrap();
-        assert!(comps.over_point.2 < (-0.00001)/2.0);
+        assert!(comps.over_point.2 < (-0.00001) / 2.0);
         assert!(comps.point.2 > comps.over_point.2);
-
     }
 
     #[test]

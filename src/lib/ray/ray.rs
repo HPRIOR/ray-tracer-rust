@@ -4,9 +4,8 @@ use crate::colour::colour::Colour;
 use crate::light::light::PointLight;
 use crate::shapes::shape::TShape;
 use crate::{
-    geometry::vector::{point, Operations, Tup, Vector},
+    geometry::vector::{Operations, Tup, Vector},
     matrix::matrix::Matrix,
-    utils::math_ext::Square,
 };
 
 // ----------- Intersection ----------- //
@@ -15,15 +14,14 @@ use crate::{
 /// hit object
 pub struct Intersection<'a> {
     pub at: f64,
-    pub object: &'a Box<dyn TShape + 'a>,
+    pub object: Box<&'a (dyn TShape + 'a)>,
 }
 
 impl<'a> Intersection<'a> {
-    pub fn new(at: f64, object: &'a Box<dyn TShape + 'a>) -> Self {
+    pub fn new(at: f64, object: Box<&'a (dyn TShape + 'a)>) -> Self {
         Self { at, object }
     }
 }
-
 
 pub trait Hit {
     type Output;
@@ -51,7 +49,7 @@ impl<'a> Hit for Vec<Intersection<'a>> {
 
 // ----------- PreComp ----------- //
 pub struct PreComp<'a> {
-    object: &'a Box<dyn TShape + 'a>,
+    object: Box<&'a (dyn TShape + 'a)>,
     pub point: Tup,
     pub over_point: Tup,
     eye_v: Tup,
@@ -87,49 +85,20 @@ impl Ray {
         self.direction.mul(t).add(self.origin)
     }
 
-    // The logic for intersects will have to change depending on the shape. The logic will
-    // need to be delegated to the TShape trait: Tshape fn (&ray) -> Vec<Box<dyn TIntersection>>
-    // not sure that the intersect needs to be a trait if they already reference the TShape trait
-    pub fn intersect<'a>(&'a self, shape: &'a Box<dyn TShape + 'a>) -> Vec<Intersection<'a>> {
-        if let Some(shape_transform) = shape.transform().inverse() {
-            let new_ray = self.transform(&shape_transform);
-            let sphere_to_ray = new_ray.origin.sub(point(0.0, 0.0, 0.0));
-
-            let a = new_ray.direction.dot(new_ray.direction);
-            let b = (new_ray.direction.dot(sphere_to_ray)) * 2.0;
-            let c = sphere_to_ray.dot(sphere_to_ray) - 1.0;
-
-            // if negative then ray misses - no intersection
-            let discriminant = b.squared() - 4.0 * a * c;
-
-            if discriminant < 0.0 {
-                return vec![];
-            }
-
-            let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
-            let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
-
-            let i1 = Intersection::new(t1, shape);
-            let i2 = Intersection::new(t2, shape);
-            vec![i1, i2]
-        } else {
-            vec![]
-        }
-    }
 
     /// Returns a vector of intersections ordered from nearest to farthest
     pub fn intersect_objects<'a>(
         &'a self,
-        shapes: &'a Vec<Box<dyn TShape>>,
+        shapes: &'a Vec<Box<&'a dyn TShape>>,
     ) -> Vec<Intersection<'a>> {
         let mut result: Vec<Intersection<'a>> =
-            shapes.iter().flat_map(|o| self.intersect(o)).collect();
+            shapes.into_iter().flat_map(|o| o.intersect(self)/* .intersect(o.to_trait_ref()) */).collect();
         result.sort_by(|a, b| a.at.total_cmp(&b.at));
         result
     }
 
     pub fn prep_comps<'a>(&'a self, intersection: &Intersection<'a>) -> Option<PreComp> {
-        let object = intersection.object;
+        let object = intersection.object.to_trait_ref();
         let p = self.position(intersection.at);
         let eye_v = self.direction.neg();
         let maybe_norm_v = object.normal_at(p);
@@ -198,7 +167,7 @@ mod tests {
 
         let sphere: Box<dyn TShape> = Sphere::as_trait();
 
-        let xs = ray.intersect(&sphere);
+        let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 2);
 
         assert_eq!(xs[0].at, 4.0);
@@ -213,7 +182,7 @@ mod tests {
 
         let sphere: Box<dyn TShape> = Sphere::as_trait();
 
-        let xs = ray.intersect(&sphere);
+        let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 2);
 
         assert_eq!(xs[0].at, 5.0);
@@ -228,7 +197,7 @@ mod tests {
 
         let sphere: Box<dyn TShape> = Sphere::as_trait();
 
-        let xs = ray.intersect(&sphere);
+        let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 0);
     }
 
@@ -240,7 +209,7 @@ mod tests {
 
         let sphere: Box<dyn TShape> = Sphere::as_trait();
 
-        let xs = ray.intersect(&sphere);
+        let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 2);
 
         assert_eq!(xs[0].at, -1.0);
@@ -255,7 +224,7 @@ mod tests {
 
         let sphere: Box<dyn TShape> = Sphere::as_trait();
 
-        let xs = ray.intersect(&sphere);
+        let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 2);
 
         assert_eq!(xs[0].at, -6.0);
@@ -268,26 +237,26 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
         let sphere: Box<dyn TShape> = Sphere::as_trait();
-        let sut = ray.intersect(&sphere);
+        let sut = sphere.intersect(&ray);
         assert_eq!(sut.len(), 2);
 
-        let o1 = sut[0].object;
-        let o2 = sut[1].object;
+        let o1 = &sut[0].object;
+        let o2 = &sut[1].object;
 
         let other_sphere: Box<dyn TShape> = Sphere::as_trait();
 
-        assert!(std::ptr::eq(o1, o2));
-        assert!(std::ptr::eq(o1, &sphere));
-        assert!(std::ptr::eq(o2, &sphere));
-        assert!(!std::ptr::eq(o1, &other_sphere));
-        assert!(!std::ptr::eq(o2, &other_sphere));
+        assert!(std::ptr::eq(*o1.as_ref(), *o2.as_ref()));
+        assert!(std::ptr::eq(*o1.as_ref(), sphere.as_ref()));
+        assert!(std::ptr::eq(*o2.as_ref(), sphere.as_ref()));
+        assert!(!std::ptr::eq(*o1.as_ref(), other_sphere.as_ref()));
+        assert!(!std::ptr::eq(*o2.as_ref(), other_sphere.as_ref()));
     }
 
     #[test]
     fn correct_hit_when_all_intersections_have_positive_t() {
         let s: Box<dyn TShape> = Sphere::as_trait();
-        let i1 = Intersection::new(1.0, &s);
-        let i2 = Intersection::new(2.0, &s);
+        let i1 = Intersection::new(1.0, s.to_trait_ref());
+        let i2 = Intersection::new(2.0, s.to_trait_ref());
         let xs = vec![i1, i2];
         let sut = xs.hit().unwrap();
         assert!(std::ptr::eq(&xs[0], sut));
@@ -296,8 +265,8 @@ mod tests {
     #[test]
     fn correct_hit_when_all_intersections_some_intersections_have_negative_t() {
         let s: Box<dyn TShape> = Sphere::as_trait();
-        let i1 = Intersection::new(-1.0, &s);
-        let i2 = Intersection::new(1.0, &s);
+        let i1 = Intersection::new(-1.0, s.to_trait_ref());
+        let i2 = Intersection::new(1.0, s.to_trait_ref());
         let xs = vec![i1, i2];
         let sut = xs.hit().unwrap();
         assert!(std::ptr::eq(&xs[1], sut));
@@ -306,8 +275,8 @@ mod tests {
     #[test]
     fn correct_hit_when_all_intersections_all_intersections_have_negative_t() {
         let s: Box<dyn TShape> = Sphere::as_trait();
-        let i1 = Intersection::new(-1.0, &s);
-        let i2 = Intersection::new(-1.0, &s);
+        let i1 = Intersection::new(-1.0, s.to_trait_ref());
+        let i2 = Intersection::new(-1.0, s.to_trait_ref());
         let xs = vec![i1, i2];
         let sut = xs.hit();
         assert!(sut.is_none());
@@ -316,10 +285,10 @@ mod tests {
     #[test]
     fn hit_is_lowest_non_negative_intersection() {
         let s: Box<dyn TShape> = Sphere::as_trait();
-        let i1 = Intersection::new(5.0, &s);
-        let i2 = Intersection::new(7.0, &s);
-        let i3 = Intersection::new(-3.0, &s);
-        let i4 = Intersection::new(2.0, &s);
+        let i1 = Intersection::new(5.0, s.to_trait_ref());
+        let i2 = Intersection::new(7.0, s.to_trait_ref());
+        let i3 = Intersection::new(-3.0, s.to_trait_ref());
+        let i4 = Intersection::new(2.0, s.to_trait_ref());
         let xs = vec![i1, i2, i3, i4];
         let sut = xs.hit().unwrap();
         assert!(std::ptr::eq(&xs[3], sut));
@@ -347,7 +316,7 @@ mod tests {
         let r1 = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let m = Matrix::scaling(2.0, 2.0, 2.0);
         let s: Box<dyn TShape> = Sphere::as_trait_with_transform(m);
-        let xs = r1.intersect(&s);
+        let xs = s.intersect(&r1);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].at, 3.0);
@@ -358,7 +327,7 @@ mod tests {
         let r1 = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let m = Matrix::translation(5.0, 0.0, 0.0);
         let s: Box<dyn TShape> = Sphere::as_trait_with_transform(m);
-        let xs = r1.intersect(&s);
+        let xs = s.intersect(&r1);
 
         assert_eq!(xs.len(), 0);
     }
@@ -369,13 +338,13 @@ mod tests {
         let shape: Box<dyn TShape> = Sphere::as_trait();
         let i = Intersection {
             at: 4.0,
-            object: &shape,
+            object: shape.to_trait_ref(),
         };
         let comps = ray.prep_comps(&i).unwrap();
         let comps_obj = comps.object;
         let intersect_obj = i.object;
         // intersect and precom reference the same obj
-        assert!(std::ptr::eq(comps_obj, intersect_obj));
+        assert!(std::ptr::eq(*comps_obj.as_ref(), *intersect_obj.as_ref()));
 
         assert_eq!(comps.point, point(0.0, 0.0, -1.0));
         assert_eq!(comps.eye_v, vector(0.0, 0.0, -1.0));
@@ -386,7 +355,7 @@ mod tests {
     fn inside_is_false_when_intersection_occurs_on_the_outsied() {
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::as_trait();
-        let i = Intersection::new(4.0, &shape);
+        let i = Intersection::new(4.0, shape.to_trait_ref());
         let comps = ray.prep_comps(&i).unwrap();
         assert_eq!(comps.inside, false);
     }
@@ -395,7 +364,7 @@ mod tests {
     fn intersection_when_intersection_occurs_on_the_inside() {
         let ray = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::as_trait();
-        let i = Intersection::new(1.0, &shape);
+        let i = Intersection::new(1.0, shape.to_trait_ref());
         let comps = ray.prep_comps(&i).unwrap();
 
         assert_eq!(comps.point, point(0.0, 0.0, 1.0));
@@ -411,7 +380,7 @@ mod tests {
             Material::new(0.1, 0.7, 0.2, 200.0, Colour::new(0.8, 1.0, 0.6)),
         );
         let s2 = Sphere::as_trait_with_transform(Matrix::scaling(0.5, 0.5, 0.5));
-        let objects = vec![s1, s2];
+        let objects = vec![s1.to_trait_ref(), s2.to_trait_ref()];
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
 
         let sut = ray.intersect_objects(&objects);
