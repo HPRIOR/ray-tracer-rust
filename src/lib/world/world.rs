@@ -20,10 +20,7 @@ impl World {
     }
 
     pub fn color_at(&self, ray: &Ray) -> Colour {
-        let trait_refs: Vec<Box<&dyn TShape>> =
-            self.objects.iter().map(|o| o.to_trait_ref()).collect();
-
-        let intersections: Vec<Intersection> = ray.intersect_objects(&trait_refs);
+        let intersections: Vec<Intersection> = ray.intersect_objects(&self.objects);
 
         let maybe_intersection = intersections.get(0);
 
@@ -46,10 +43,8 @@ impl World {
         // cast ray between light source and ray intersection point
         let ray = Ray::new(point, direction);
 
-        let trait_refs: Vec<Box<&dyn TShape>> =
-            self.objects.iter().map(|o| o.to_trait_ref()).collect();
 
-        let maybe_intersect = ray.intersect_objects(&trait_refs);
+        let maybe_intersect = ray.intersect_objects(&self.objects);
         let maybe_hit = maybe_intersect.hit();
 
         maybe_hit.map(|h| h.at < distance).unwrap_or(false)
@@ -105,9 +100,7 @@ mod test {
     fn can_get_world_intersects() {
         let world = World::default();
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
-        let trait_refs: Vec<Box<&dyn TShape>> =
-            world.objects.iter().map(|o| o.to_trait_ref()).collect();
-        let sut = ray.intersect_objects(&trait_refs);
+        let sut = ray.intersect_objects(&world.objects);
         assert_eq!(sut.len(), 4);
         assert_eq!(sut[0].at, 4.0);
         assert_eq!(sut[1].at, 4.5);
