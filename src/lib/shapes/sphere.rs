@@ -5,7 +5,8 @@ use crate::{
     geometry::vector::{point, Operations, Tup, Vector},
     material::material::Material,
     matrix::matrix::Matrix,
-    ray::ray::{Intersection, Ray}, utils::math_ext::Square,
+    ray::ray::{Intersection, Ray},
+    utils::math_ext::Square,
 };
 
 use super::shape::TShape;
@@ -41,7 +42,7 @@ impl SphereBuilder {
         self
     }
 
-    pub fn build(self) -> Sphere{
+    pub fn build(self) -> Sphere {
         Sphere {
             id: Uuid::new_v4(),
             transform: self.transform.unwrap_or(Matrix::ident()),
@@ -49,7 +50,7 @@ impl SphereBuilder {
         }
     }
 
-    pub fn build_as_trait(self) -> Box<dyn TShape>{
+    pub fn build_trait(self) -> Box<dyn TShape> {
         Box::new(Sphere {
             id: Uuid::new_v4(),
             transform: self.transform.unwrap_or(Matrix::ident()),
@@ -65,7 +66,6 @@ pub struct Sphere {
     pub material: Material,
 }
 
-
 impl Sphere {
     pub fn builder() -> SphereBuilder {
         SphereBuilder::default()
@@ -77,46 +77,6 @@ impl Sphere {
             transform: Matrix::ident(),
             material: Material::default(),
         }
-    }
-
-    pub fn with_transform(translation: Matrix) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            transform: translation,
-            material: Material::default(),
-        }
-    }
-
-    pub fn with_attr(translation: Matrix, material: Material) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            transform: translation,
-            material,
-        }
-    }
-
-    pub fn as_trait() -> Box<dyn TShape> {
-        Box::new(Self {
-            id: Uuid::new_v4(),
-            transform: Matrix::ident(),
-            material: Material::default(),
-        })
-    }
-
-    pub fn as_trait_with_transform(translation: Matrix) -> Box<dyn TShape> {
-        Box::new(Self {
-            id: Uuid::new_v4(),
-            transform: translation,
-            material: Material::default(),
-        })
-    }
-
-    pub fn as_trait_with_attr(translation: Matrix, material: Material) -> Box<dyn TShape> {
-        Box::new(Self {
-            id: Uuid::new_v4(),
-            transform: translation,
-            material,
-        })
     }
 
     pub fn to_trait(&self) -> Box<&dyn TShape> {
@@ -165,7 +125,6 @@ impl TShape for Sphere {
         let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
         let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
 
-
         let i1 = Intersection::new(t1, self.to_trait_ref());
         let i2 = Intersection::new(t2, self.to_trait_ref());
         vec![i1, i2]
@@ -206,7 +165,7 @@ mod tests {
     #[test]
     fn sphere_can_be_created_with_new_transform() {
         let t = Matrix::translation(2.0, 3.0, 4.0);
-        let s = Sphere::with_transform(t.clone());
+        let s = Sphere::builder().with_transform(t.clone()).build();
         assert_eq!(s.transform, t);
     }
 
@@ -250,18 +209,20 @@ mod tests {
 
     #[test]
     fn normal_with_translated_sphere() {
-        let s = Sphere::with_transform(Matrix::translation(0.0, 1.0, 0.0));
+        let s = Sphere::builder()
+            .with_transform(Matrix::translation(0.0, 1.0, 0.0))
+            .build();
         let sut = s.normal_at(point(0.0, 1.70711, -0.70711));
         sut.unwrap().approx_eq(vector(0.0, 0.70711, -0.70711))
     }
 
     #[test]
     fn normal_with_transformed_sphere() {
-        let s = Sphere::with_transform(
+        let s = Sphere::builder().with_transform(
             Matrix::ident()
                 .rotate(Axis::Z, PI / 5.0)
                 .scale(1.0, 0.5, 1.0),
-        );
+        ).build();
         let sut = s.normal_at(point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0));
         sut.unwrap().approx_eq(vector(0.0, 0.97014, -0.24254));
     }

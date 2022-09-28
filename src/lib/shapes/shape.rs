@@ -20,6 +20,7 @@ pub trait TShape: Sync + Send{
         return vec![];
     }
 
+    /// required to pass self to intersection, which must accept a reference to any shape
     fn to_trait_ref(&self) -> Box<&dyn TShape>;
 }
 

@@ -28,11 +28,7 @@ impl World {
             .and_then(|i| ray.prep_comps(i))
             .map(|pc| pc.shade_hit(&self.light, self.is_shadowed(pc.over_point)));
 
-        if let Some(shade_hit) = maybe_shade_hit {
-            shade_hit
-        } else {
-            Colour::black()
-        }
+        maybe_shade_hit.unwrap_or(Colour::black())
     }
 
     fn is_shadowed(&self, point: Tup) -> bool {
@@ -43,7 +39,6 @@ impl World {
         // cast ray between light source and ray intersection point
         let ray = Ray::new(point, direction);
 
-
         let maybe_intersect = ray.intersect_objects(&self.objects);
         let maybe_hit = maybe_intersect.hit();
 
@@ -53,11 +48,19 @@ impl World {
 
 impl Default for World {
     fn default() -> Self {
-        let s1 = Sphere::as_trait_with_attr(
-            Matrix::ident(),
-            Material::new(0.1, 0.7, 0.2, 200.0, Colour::new(0.8, 1.0, 0.6)),
-        );
-        let s2 = Sphere::as_trait_with_transform(Matrix::scaling(0.5, 0.5, 0.5));
+        let s1 = Sphere::builder()
+            .with_transform(Matrix::ident())
+            .with_material(Material::new(
+                0.1,
+                0.7,
+                0.2,
+                200.0,
+                Colour::new(0.8, 1.0, 0.6),
+            ))
+            .build_trait();
+        let s2 = Sphere::builder()
+            .with_transform(Matrix::scaling(0.5, 0.5, 0.5))
+            .build_trait();
         Self {
             objects: vec![s1, s2],
             light: PointLight::default(),
@@ -131,13 +134,13 @@ mod test {
 
     #[test]
     fn precomp_will_cast_shadow() {
-        let s1 = Sphere::as_trait();
+        let s1 = Sphere::builder().build_trait();
         let s2 = Sphere::builder()
             .with_transform(Matrix::translation(0.0, 0.0, 10.0))
-            .build_as_trait();
+            .build_trait();
         let s2_copy = Sphere::builder()
             .with_transform(Matrix::translation(0.0, 0.0, 10.0))
-            .build_as_trait();
+            .build_trait();
 
         let light = PointLight::new(point(0.0, 0.0, -10.0), Colour::white());
 
@@ -155,7 +158,7 @@ mod test {
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::builder()
             .with_transform(Matrix::translation(0.0, 0.0, 1.0))
-            .build_as_trait();
+            .build_trait();
         let intersection = Intersection::new(5.0, shape.to_trait_ref());
         let comps = ray.prep_comps(&intersection).unwrap();
         assert!(comps.over_point.2 < (-0.00001) / 2.0);

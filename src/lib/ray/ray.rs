@@ -85,14 +85,13 @@ impl Ray {
         self.direction.mul(t).add(self.origin)
     }
 
-
     /// Returns a vector of intersections ordered from nearest to farthest
-    pub fn intersect_objects<'a>(
-        &'a self,
-        shapes: &'a Vec<Box<dyn TShape>>,
-    ) -> Vec<Intersection<'a>> {
+    /// The actual intersection of the ray is delegated to the TShape trait so that any group of
+    /// shapes can be intersected
+    pub fn intersect_objects<'a>(&self, shapes: &'a Vec<Box<dyn TShape>>) -> Vec<Intersection<'a>> {
         let mut result: Vec<Intersection<'a>> =
-            shapes.into_iter().flat_map(|o| o.intersect(self)/* .intersect(o.to_trait_ref()) */).collect();
+            shapes.into_iter().flat_map(|o| o.intersect(self)).collect();
+
         result.sort_by(|a, b| a.at.total_cmp(&b.at));
         result
     }
@@ -165,7 +164,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn TShape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::builder().build_trait();
 
         let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 2);
@@ -180,7 +179,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn TShape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::builder().build_trait();
 
         let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 2);
@@ -195,7 +194,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn TShape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::builder().build_trait();
 
         let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 0);
@@ -207,7 +206,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn TShape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::builder().build_trait();
 
         let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 2);
@@ -222,7 +221,7 @@ mod tests {
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
 
-        let sphere: Box<dyn TShape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::builder().build_trait();
 
         let xs = sphere.intersect(&ray);
         assert_eq!(xs.len(), 2);
@@ -236,14 +235,14 @@ mod tests {
         let origin = point(0.0, 0.0, -5.0);
         let direction = vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let sphere: Box<dyn TShape> = Sphere::as_trait();
+        let sphere: Box<dyn TShape> = Sphere::builder().build_trait();
         let sut = sphere.intersect(&ray);
         assert_eq!(sut.len(), 2);
 
         let o1 = &sut[0].object;
         let o2 = &sut[1].object;
 
-        let other_sphere: Box<dyn TShape> = Sphere::as_trait();
+        let other_sphere: Box<dyn TShape> = Sphere::builder().build_trait();
 
         assert!(std::ptr::eq(*o1.as_ref(), *o2.as_ref()));
         assert!(std::ptr::eq(*o1.as_ref(), sphere.as_ref()));
@@ -254,7 +253,7 @@ mod tests {
 
     #[test]
     fn correct_hit_when_all_intersections_have_positive_t() {
-        let s: Box<dyn TShape> = Sphere::as_trait();
+        let s: Box<dyn TShape> = Sphere::builder().build_trait();
         let i1 = Intersection::new(1.0, s.to_trait_ref());
         let i2 = Intersection::new(2.0, s.to_trait_ref());
         let xs = vec![i1, i2];
@@ -264,7 +263,7 @@ mod tests {
 
     #[test]
     fn correct_hit_when_all_intersections_some_intersections_have_negative_t() {
-        let s: Box<dyn TShape> = Sphere::as_trait();
+        let s: Box<dyn TShape> = Sphere::builder().build_trait();
         let i1 = Intersection::new(-1.0, s.to_trait_ref());
         let i2 = Intersection::new(1.0, s.to_trait_ref());
         let xs = vec![i1, i2];
@@ -274,7 +273,7 @@ mod tests {
 
     #[test]
     fn correct_hit_when_all_intersections_all_intersections_have_negative_t() {
-        let s: Box<dyn TShape> = Sphere::as_trait();
+        let s: Box<dyn TShape> = Sphere::builder().build_trait();
         let i1 = Intersection::new(-1.0, s.to_trait_ref());
         let i2 = Intersection::new(-1.0, s.to_trait_ref());
         let xs = vec![i1, i2];
@@ -284,7 +283,7 @@ mod tests {
 
     #[test]
     fn hit_is_lowest_non_negative_intersection() {
-        let s: Box<dyn TShape> = Sphere::as_trait();
+        let s: Box<dyn TShape> = Sphere::builder().build_trait();
         let i1 = Intersection::new(5.0, s.to_trait_ref());
         let i2 = Intersection::new(7.0, s.to_trait_ref());
         let i3 = Intersection::new(-3.0, s.to_trait_ref());
@@ -315,7 +314,7 @@ mod tests {
     fn intersecting_scaled_sphere_with_a_ray() {
         let r1 = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let m = Matrix::scaling(2.0, 2.0, 2.0);
-        let s: Box<dyn TShape> = Sphere::as_trait_with_transform(m);
+        let s: Box<dyn TShape> = Sphere::builder().with_transform(m).build_trait();
         let xs = s.intersect(&r1);
 
         assert_eq!(xs.len(), 2);
@@ -326,7 +325,7 @@ mod tests {
     fn intersecting_translated_sphere_with_a_ray() {
         let r1 = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let m = Matrix::translation(5.0, 0.0, 0.0);
-        let s: Box<dyn TShape> = Sphere::as_trait_with_transform(m);
+        let s: Box<dyn TShape> = Sphere::builder().with_transform(m).build_trait();
         let xs = s.intersect(&r1);
 
         assert_eq!(xs.len(), 0);
@@ -335,7 +334,7 @@ mod tests {
     #[test]
     fn precomputing_intersection_state() {
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
-        let shape: Box<dyn TShape> = Sphere::as_trait();
+        let shape: Box<dyn TShape> = Sphere::builder().build_trait();
         let i = Intersection {
             at: 4.0,
             object: shape.to_trait_ref(),
@@ -354,7 +353,7 @@ mod tests {
     #[test]
     fn inside_is_false_when_intersection_occurs_on_the_outsied() {
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
-        let shape = Sphere::as_trait();
+        let shape = Sphere::builder().build_trait();
         let i = Intersection::new(4.0, shape.to_trait_ref());
         let comps = ray.prep_comps(&i).unwrap();
         assert_eq!(comps.inside, false);
@@ -363,7 +362,7 @@ mod tests {
     #[test]
     fn intersection_when_intersection_occurs_on_the_inside() {
         let ray = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
-        let shape = Sphere::as_trait();
+        let shape = Sphere::builder().build_trait();
         let i = Intersection::new(1.0, shape.to_trait_ref());
         let comps = ray.prep_comps(&i).unwrap();
 
@@ -375,11 +374,19 @@ mod tests {
 
     #[test]
     fn can_get_ordered_intersects_with_multiple_objects() {
-        let s1 = Sphere::as_trait_with_attr(
-            Matrix::ident(),
-            Material::new(0.1, 0.7, 0.2, 200.0, Colour::new(0.8, 1.0, 0.6)),
-        );
-        let s2 = Sphere::as_trait_with_transform(Matrix::scaling(0.5, 0.5, 0.5));
+        let s1 = Sphere::builder()
+            .with_transform(Matrix::ident())
+            .with_material(Material::new(
+                0.1,
+                0.7,
+                0.2,
+                200.0,
+                Colour::new(0.8, 1.0, 0.6),
+            ))
+            .build_trait();
+        let s2 = Sphere::builder()
+            .with_transform(Matrix::scaling(0.5, 0.5, 0.5))
+            .build_trait();
         let objects = vec![s1, s2];
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
 

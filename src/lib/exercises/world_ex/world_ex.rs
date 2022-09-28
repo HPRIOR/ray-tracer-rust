@@ -22,7 +22,7 @@ fn render_world() {
     let floor = Sphere::builder()
         .with_transform(Matrix::scaling(10.0, 0.01, 10.0))
         .with_material(bg_mat)
-        .build_as_trait();
+        .build_trait();
 
     let l_wall = Sphere::builder()
         .with_transform(
@@ -33,7 +33,7 @@ fn render_world() {
                 .translate(0.0, 0.0, 5.0),
         )
         .with_material(bg_mat)
-        .build_as_trait();
+        .build_trait();
 
     let r_wall = Sphere::builder()
         .with_transform(
@@ -44,7 +44,7 @@ fn render_world() {
                 .translate(0.0, 0.0, 5.0),
         )
         .with_material(bg_mat)
-        .build_as_trait();
+        .build_trait();
 
     let middle = Sphere::builder()
         .with_transform(Matrix::ident().translate(-0.5, 1.0, 0.5))
@@ -55,7 +55,7 @@ fn render_world() {
                 .with_specular(0.3)
                 .build(),
         )
-        .build_as_trait();
+        .build_trait();
 
     let right = Sphere::builder()
         .with_transform(
@@ -70,7 +70,7 @@ fn render_world() {
                 .with_specular(0.3)
                 .build(),
         )
-        .build_as_trait();
+        .build_trait();
 
     let left = Sphere::builder()
         .with_transform(
@@ -85,7 +85,7 @@ fn render_world() {
                 .with_specular(0.3)
                 .build(),
         )
-        .build_as_trait();
+        .build_trait();
 
     let world = World::new(
         vec![right, left, middle, floor, l_wall, r_wall],
