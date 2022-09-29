@@ -93,19 +93,8 @@ impl TShape for Sphere {
         &self.transform
     }
 
-    fn normal_at(&self, world_point: Tup) -> Option<Tup> {
-        let object_normal = self
-            .transform
-            .inverse()
-            .map(|p| p.mul_tup(world_point).sub(point(0.0, 0.0, 0.0)));
-
-        let world_normal = object_normal.and_then(|object_norm| {
-            self.transform
-                .transpose()
-                .inverse()
-                .map(|p| p.mul_tup(object_norm))
-        });
-        world_normal.map(|p| (p.0, p.1, p.2, 0.0).norm())
+    fn shape_normal_at(&self, local_point: Tup) -> Tup {
+        local_point.sub(point(0.0, 0.0, 0.0))
     }
 
     fn shape_intersect(&self, ray: &Ray) -> Vec<Intersection> {
@@ -218,11 +207,13 @@ mod tests {
 
     #[test]
     fn normal_with_transformed_sphere() {
-        let s = Sphere::builder().with_transform(
-            Matrix::ident()
-                .rotate(Axis::Z, PI / 5.0)
-                .scale(1.0, 0.5, 1.0),
-        ).build();
+        let s = Sphere::builder()
+            .with_transform(
+                Matrix::ident()
+                    .rotate(Axis::Z, PI / 5.0)
+                    .scale(1.0, 0.5, 1.0),
+            )
+            .build();
         let sut = s.normal_at(point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0));
         sut.unwrap().approx_eq(vector(0.0, 0.97014, -0.24254));
     }
