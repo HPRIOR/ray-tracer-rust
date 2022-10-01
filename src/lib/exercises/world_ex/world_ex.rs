@@ -9,7 +9,7 @@ use crate::{
     light::light::PointLight,
     material::material::Material,
     matrix::matrix::{Axis, Matrix},
-    shapes::sphere::Sphere,
+    shapes::{sphere::Sphere, plane::Plane},
     world::world::World,
 };
 
@@ -19,35 +19,34 @@ fn render_world() {
         .with_specular(0.0)
         .build();
 
-    let floor = Sphere::builder()
-        .with_transform(Matrix::scaling(10.0, 0.01, 10.0))
+    let floor = Plane::builder()
         .with_material(bg_mat)
         .build_trait();
 
-    let l_wall = Sphere::builder()
-        .with_transform(
-            Matrix::ident()
-                .scale(10.0, 0.01, 10.0)
-                .rotate(Axis::X, PI / 2.0)
-                .rotate(Axis::Y, -PI / 4.0)
-                .translate(0.0, 0.0, 5.0),
-        )
-        .with_material(bg_mat)
-        .build_trait();
-
-    let r_wall = Sphere::builder()
-        .with_transform(
-            Matrix::ident()
-                .scale(10.0, 0.01, 10.0)
-                .rotate(Axis::X, PI / 2.0)
-                .rotate(Axis::Y, PI / 4.0)
-                .translate(0.0, 0.0, 5.0),
-        )
-        .with_material(bg_mat)
-        .build_trait();
+    // let l_wall = Sphere::builder()
+    //     .with_transform(
+    //         Matrix::ident()
+    //             .scale(10.0, 0.01, 10.0)
+    //             .rotate(Axis::X, PI / 2.0)
+    //             .rotate(Axis::Y, -PI / 4.0)
+    //             .translate(0.0, 0.0, 5.0),
+    //     )
+    //     .with_material(bg_mat)
+    //     .build_trait();
+    //
+    // let r_wall = Sphere::builder()
+    //     .with_transform(
+    //         Matrix::ident()
+    //             .scale(10.0, 0.01, 10.0)
+    //             .rotate(Axis::X, PI / 2.0)
+    //             .rotate(Axis::Y, PI / 4.0)
+    //             .translate(0.0, 0.0, 5.0),
+    //     )
+    //     .with_material(bg_mat)
+    //     .build_trait();
 
     let middle = Sphere::builder()
-        .with_transform(Matrix::ident().translate(-0.5, 1.0, 0.5))
+        .with_transform(Matrix::ident().translate(0.33, 0.9, 0.0).scale(0.5,1.5, 1.0))
         .with_material(
             Material::builder()
                 .with_colour(Colour::new(0.1, 1.0, 0.5))
@@ -61,7 +60,7 @@ fn render_world() {
         .with_transform(
             Matrix::ident()
                 .scale(0.5, 0.5, 0.5)
-                .translate(-0.5, 1.5, -0.5),
+                .translate(0.5, 0.5, -0.5),
         )
         .with_material(
             Material::builder()
@@ -75,8 +74,8 @@ fn render_world() {
     let left = Sphere::builder()
         .with_transform(
             Matrix::ident()
-                .scale(0.33, 0.33, 0.33)
-                .translate(-1.5, 0.33, -0.75),
+                .scale(0.4, 0.4, 0.4)
+                .translate(-0.33, 0.33, -0.75),
         )
         .with_material(
             Material::builder()
@@ -88,11 +87,11 @@ fn render_world() {
         .build_trait();
 
     let world = World::new(
-        vec![right, left, middle, floor, l_wall, r_wall],
+        vec![right, left, middle, floor],
         PointLight::new(point(-10.0, 10.0, -10.0), Colour::white()),
     );
 
-    let mut camera = Camera::new(500, 250, PI / 3.0);
+    let mut camera = Camera::new(1000, 1000, PI / 3.0);
     camera.transform = Matrix::view_transform(
         point(0.0, 1.5, -5.0),
         point(0.0, 1.0, 0.0),
@@ -110,6 +109,6 @@ mod tests {
 
     #[test]
     fn run() {
-        // render_world();
+         render_world();
     }
 }

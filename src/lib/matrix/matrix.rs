@@ -14,6 +14,11 @@ pub enum Axis {
     Y,
     Z,
 }
+impl Default for Matrix{
+    fn default() -> Self {
+        Matrix::ident()
+    }
+}
 
 impl Matrix {
     pub fn new(matrix: MatrixVec) -> Self {

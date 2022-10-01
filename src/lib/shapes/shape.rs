@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::{
     geometry::vector::{Tup, Vector},
     material::material::Material,
@@ -5,7 +7,7 @@ use crate::{
     ray::ray::{Intersection, Ray},
 };
 
-pub trait TShape: Sync + Send {
+pub trait TShape: Sync + Send + Debug{
     fn material(&self) -> &Material;
     fn transform(&self) -> &Matrix;
 

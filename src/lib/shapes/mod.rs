@@ -1,3 +1,3 @@
 pub mod shape;
 pub mod sphere;
-mod plane;
+pub mod plane;

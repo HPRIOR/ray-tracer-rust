@@ -12,6 +12,7 @@ use crate::{
 
 /// Holds information about where a ray has intersected an object. It contains a reference to the
 /// hit object
+#[derive(Debug)]
 pub struct Intersection<'a> {
     pub at: f64,
     pub object: Box<&'a (dyn TShape + 'a)>,

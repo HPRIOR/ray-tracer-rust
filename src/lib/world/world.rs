@@ -9,6 +9,7 @@ use crate::{
     shapes::{shape::TShape, sphere::Sphere},
 };
 
+
 pub struct World {
     pub objects: Vec<Box<dyn TShape>>,
     pub light: PointLight,
@@ -22,7 +23,7 @@ impl World {
     pub fn color_at(&self, ray: &Ray) -> Colour {
         let intersections: Vec<Intersection> = ray.intersect_objects(&self.objects);
 
-        let maybe_intersection = intersections.get(0);
+        let maybe_intersection = intersections.hit();
 
         let maybe_shade_hit = maybe_intersection
             .and_then(|i| ray.prep_comps(i))

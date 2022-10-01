@@ -100,7 +100,7 @@ impl Material {
         light: &PointLight,
         eye_vec: Tup,
         norm_vec: Tup,
-        in_shadow:bool
+        in_shadow: bool,
     ) -> Colour {
         if in_shadow {
             return Colour::new(0.1, 0.1, 0.1);
@@ -140,6 +140,7 @@ impl Default for Material {
         }
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -216,7 +217,7 @@ mod tests {
     fn shadow_cast() {
         let eye_v = vector(0.0, 0.0, -1.0);
         let normal_v = vector(0.0, 0.0, -1.0);
-        let position = point(0.0, 0.0,0.0);
+        let position = point(0.0, 0.0, 0.0);
         let light = PointLight::new(point(0.0, 0.0, -10.0), Colour::white());
         let in_shadow = true;
         let material = Material::default();

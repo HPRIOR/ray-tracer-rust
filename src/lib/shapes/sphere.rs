@@ -19,8 +19,8 @@ pub struct SphereBuilder {
 impl Default for SphereBuilder {
     fn default() -> Self {
         Self {
-            transform: Default::default(),
-            material: Default::default(),
+            transform: Some(Default::default()),
+            material: Some(Default::default()),
         }
     }
 }
