@@ -10,6 +10,8 @@ use crate::{
     light::light::PointLight,
 };
 
+use super::pattern::Pattern;
+
 #[derive(Debug, Copy, Clone)]
 pub struct Material {
     pub ambient: f64,
@@ -100,7 +102,7 @@ impl Material {
         light: &PointLight,
         eye_vec: Tup,
         norm_vec: Tup,
-        in_shadow: bool,
+        in_shadow: bool
     ) -> Colour {
         if in_shadow {
             return Colour::new(0.1, 0.1, 0.1);
@@ -224,4 +226,16 @@ mod tests {
         let result = material.lighting(position, &light, eye_v, normal_v, in_shadow);
         result.approx_eq(Colour::new(0.1, 0.1, 0.1));
     }
+
+    // #[test]
+    // fn shadow_cast() {
+    //     let eye_v = vector(0.0, 0.0, -1.0);
+    //     let normal_v = vector(0.0, 0.0, -1.0);
+    //     let position = point(0.0, 0.0, 0.0);
+    //     let light = PointLight::new(point(0.0, 0.0, -10.0), Colour::white());
+    //     let in_shadow = true;
+    //     let material = Material::default();
+    //     let result = material.lighting(position, &light, eye_v, normal_v, in_shadow);
+    //     result.approx_eq(Colour::new(0.1, 0.1, 0.1));
+    // }
 }

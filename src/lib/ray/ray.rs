@@ -65,7 +65,7 @@ impl<'a> PreComp<'a> {
             light_source,
             self.eye_v,
             self.norm_v,
-            is_shadow,
+            is_shadow
         )
     }
 }

@@ -1,2 +1,2 @@
 pub mod material;
-mod Pattern;
+mod pattern;
