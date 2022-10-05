@@ -10,7 +10,7 @@ use crate::{
     light::light::PointLight,
 };
 
-use super::pattern::Pattern;
+use super::pattern::StripePattern;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Material {
@@ -19,6 +19,7 @@ pub struct Material {
     pub specular: f64,
     pub shininess: f64,
     pub colour: Colour,
+    pattern: Option<StripePattern>,
 }
 
 pub struct MaterialBuilder {
@@ -27,6 +28,7 @@ pub struct MaterialBuilder {
     specular: f64,
     shininess: f64,
     colour: Colour,
+    pattern: Option<StripePattern>,
 }
 
 impl Default for MaterialBuilder {
@@ -37,6 +39,7 @@ impl Default for MaterialBuilder {
             specular: 0.9,
             shininess: 200.0,
             colour: Colour::new(1.0, 1.0, 1.0),
+            pattern: None,
         }
     }
 }
@@ -49,11 +52,16 @@ impl MaterialBuilder {
             specular: self.specular,
             shininess: self.shininess,
             colour: self.colour,
+            pattern: self.pattern,
         }
     }
 
     pub fn with_ambient(mut self, ambient: f64) -> MaterialBuilder {
         self.ambient = ambient;
+        self
+    }
+    pub fn with_pattern(mut self, pattern: StripePattern) -> MaterialBuilder {
+        self.pattern = Some(pattern);
         self
     }
     pub fn with_diffuse(mut self, diffuse: f64) -> MaterialBuilder {
@@ -78,13 +86,21 @@ impl Material {
     pub fn builder() -> MaterialBuilder {
         MaterialBuilder::default()
     }
-    pub fn new(ambient: f64, diffuse: f64, specular: f64, shininess: f64, colour: Colour) -> Self {
+    pub fn new(
+        ambient: f64,
+        diffuse: f64,
+        specular: f64,
+        shininess: f64,
+        colour: Colour,
+        pattern: Option<StripePattern>,
+    ) -> Self {
         Self {
             ambient,
             diffuse,
             specular,
             shininess,
             colour,
+            pattern,
         }
     }
 
@@ -102,12 +118,17 @@ impl Material {
         light: &PointLight,
         eye_vec: Tup,
         norm_vec: Tup,
-        in_shadow: bool
+        in_shadow: bool,
     ) -> Colour {
         if in_shadow {
             return Colour::new(0.1, 0.1, 0.1);
         };
-        let effective_colour = self.colour.mul(light.intensity);
+        let colour = self
+            .pattern
+            .map(|p| p.stripe_at(illum_point))
+            .unwrap_or(self.colour);
+
+        let effective_colour = colour.mul(light.intensity);
         let light_v = light.position.sub(illum_point).norm();
         let ambient = effective_colour.mul(self.ambient);
 
@@ -139,10 +160,10 @@ impl Default for Material {
             specular: 0.9,
             shininess: 200.0,
             colour: Colour::new(1.0, 1.0, 1.0),
+            pattern: None,
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -150,6 +171,7 @@ mod tests {
         colour::colour::Colour,
         geometry::vector::{point, vector},
         light::light::PointLight,
+        material::pattern::StripePattern,
         utils::test::ApproxEq,
     };
 
@@ -227,15 +249,21 @@ mod tests {
         result.approx_eq(Colour::new(0.1, 0.1, 0.1));
     }
 
-    // #[test]
-    // fn shadow_cast() {
-    //     let eye_v = vector(0.0, 0.0, -1.0);
-    //     let normal_v = vector(0.0, 0.0, -1.0);
-    //     let position = point(0.0, 0.0, 0.0);
-    //     let light = PointLight::new(point(0.0, 0.0, -10.0), Colour::white());
-    //     let in_shadow = true;
-    //     let material = Material::default();
-    //     let result = material.lighting(position, &light, eye_v, normal_v, in_shadow);
-    //     result.approx_eq(Colour::new(0.1, 0.1, 0.1));
-    // }
+    #[test]
+    fn lighting_with_pattern_applied() {
+        let eye_v = vector(0.0, 0.0, -1.0);
+        let normal_v = vector(0.0, 0.0, -1.0);
+        let light = PointLight::new(point(0.0, 0.0, -10.0), Colour::white());
+        let in_shadow = false;
+        let material = Material::builder()
+            .with_ambient(1.0)
+            .with_diffuse(0.0)
+            .with_specular(0.0)
+            .with_pattern(StripePattern::default())
+            .build();
+        let c1 = material.lighting(point(0.9, 0.0, 0.0), &light, eye_v, normal_v, in_shadow);
+        let c2 = material.lighting(point(1.1, 0.0, 0.0), &light, eye_v, normal_v, in_shadow);
+        c1.approx_eq(Colour::new(1.0, 1.0, 1.0));
+        c2.approx_eq(Colour::new(0.0, 0.0, 0.0));
+    }
 }

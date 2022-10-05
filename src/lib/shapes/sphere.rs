@@ -66,17 +66,23 @@ pub struct Sphere {
     pub material: Material,
 }
 
+impl Default for Sphere {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            transform: Default::default(),
+            material: Default::default(),
+        }
+    }
+}
+
 impl Sphere {
     pub fn builder() -> SphereBuilder {
         SphereBuilder::default()
     }
 
     pub fn new() -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            transform: Matrix::ident(),
-            material: Material::default(),
-        }
+        Self::default()
     }
 
     pub fn to_trait(&self) -> Box<&dyn TShape> {

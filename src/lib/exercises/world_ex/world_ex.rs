@@ -7,7 +7,7 @@ use crate::{
     exercises::shared::shared::save_canvas,
     geometry::vector::{point, vector},
     light::light::PointLight,
-    material::material::Material,
+    material::{material::Material, pattern::StripePattern},
     matrix::matrix::{Axis, Matrix},
     shapes::{sphere::Sphere, plane::Plane},
     world::world::World,
@@ -17,6 +17,7 @@ fn render_world() {
     let bg_mat = Material::builder()
         .with_colour(Colour::new(1.0, 0.9, 0.9))
         .with_specular(0.0)
+        .with_pattern(StripePattern::default())
         .build();
 
     let floor = Plane::builder()
@@ -52,6 +53,7 @@ fn render_world() {
                 .with_colour(Colour::new(0.1, 1.0, 0.5))
                 .with_diffuse(0.7)
                 .with_specular(0.3)
+                .with_pattern(StripePattern::default())
                 .build(),
         )
         .build_trait();
@@ -109,6 +111,6 @@ mod tests {
 
     #[test]
     fn run() {
-         // render_world();
+         render_world();
     }
 }

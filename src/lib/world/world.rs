@@ -57,6 +57,7 @@ impl Default for World {
                 0.2,
                 200.0,
                 Colour::new(0.8, 1.0, 0.6),
+                None
             ))
             .build_trait();
         let s2 = Sphere::builder()
