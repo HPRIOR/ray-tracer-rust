@@ -7,7 +7,7 @@ use crate::{
     exercises::shared::shared::save_canvas,
     geometry::vector::{point, vector},
     light::light::PointLight,
-    material::{material::Material, pattern::StripePattern},
+    material::{material::Material, pattern::{Stripe, Gradient, Ring, Checker}},
     matrix::matrix::{Axis, Matrix},
     shapes::{sphere::Sphere, plane::Plane},
     world::world::World,
@@ -15,9 +15,7 @@ use crate::{
 
 fn render_world() {
     let bg_mat = Material::builder()
-        .with_colour(Colour::new(1.0, 0.9, 0.9))
-        .with_specular(0.0)
-        .with_pattern(StripePattern::default())
+        .with_pattern(Box::new(Checker::default()))
         .build();
 
     let floor = Plane::builder()
@@ -47,13 +45,12 @@ fn render_world() {
     //     .build_trait();
 
     let middle = Sphere::builder()
-        .with_transform(Matrix::ident().translate(0.33, 0.9, 0.0).scale(0.5,1.5, 1.0))
+        .with_transform(Matrix::ident().translate(0.33, 0.9, 0.0))
         .with_material(
             Material::builder()
                 .with_colour(Colour::new(0.1, 1.0, 0.5))
                 .with_diffuse(0.7)
                 .with_specular(0.3)
-                .with_pattern(StripePattern::default())
                 .build(),
         )
         .build_trait();
@@ -89,11 +86,11 @@ fn render_world() {
         .build_trait();
 
     let world = World::new(
-        vec![right, left, middle, floor],
+        vec![ floor],
         PointLight::new(point(-10.0, 10.0, -10.0), Colour::white()),
     );
 
-    let mut camera = Camera::new(1000, 1000, PI / 3.0);
+    let mut camera = Camera::new(100, 100, PI / 3.0);
     camera.transform = Matrix::view_transform(
         point(0.0, 1.5, -5.0),
         point(0.0, 1.0, 0.0),
@@ -111,6 +108,6 @@ mod tests {
 
     #[test]
     fn run() {
-         // render_world();
+         render_world();
     }
 }

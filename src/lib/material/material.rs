@@ -11,7 +11,7 @@ use crate::{
     shapes::shape::TShape,
 };
 
-use super::pattern::StripePattern;
+use super::pattern::TPattern;
 
 #[derive(Debug)]
 pub struct Material {
@@ -20,7 +20,7 @@ pub struct Material {
     pub specular: f64,
     pub shininess: f64,
     pub colour: Colour,
-    pattern: Option<StripePattern>,
+    pattern: Option<Box<dyn TPattern>>
 }
 
 pub struct MaterialBuilder {
@@ -29,7 +29,7 @@ pub struct MaterialBuilder {
     specular: f64,
     shininess: f64,
     colour: Colour,
-    pattern: Option<StripePattern>,
+    pattern: Option<Box<dyn TPattern>>,
 }
 
 impl Default for MaterialBuilder {
@@ -61,7 +61,7 @@ impl MaterialBuilder {
         self.ambient = ambient;
         self
     }
-    pub fn with_pattern(mut self, pattern: StripePattern) -> MaterialBuilder {
+    pub fn with_pattern(mut self, pattern: Box<dyn TPattern>) -> MaterialBuilder {
         self.pattern = Some(pattern);
         self
     }
@@ -93,7 +93,7 @@ impl Material {
         specular: f64,
         shininess: f64,
         colour: Colour,
-        pattern: Option<StripePattern>,
+        pattern: Option<Box<dyn TPattern>>,
     ) -> Self {
         Self {
             ambient,
@@ -128,7 +128,7 @@ impl Material {
         let colour = self
             .pattern
             .as_ref()
-            .and_then(|p| p.stripe_at_object(object, illum_point))
+            .and_then(|p| p.pattern_at_object(object, illum_point))
             .unwrap_or(self.colour);
 
         let effective_colour = colour.mul(light.intensity);
@@ -174,7 +174,7 @@ mod tests {
         colour::colour::Colour,
         geometry::vector::{point, vector},
         light::light::PointLight,
-        material::pattern::StripePattern,
+        material::pattern::Stripe,
         shapes::sphere::Sphere,
         utils::test::ApproxEq,
     };
@@ -311,7 +311,7 @@ mod tests {
             .with_ambient(1.0)
             .with_diffuse(0.0)
             .with_specular(0.0)
-            .with_pattern(StripePattern::default())
+            .with_pattern(Box::new(Stripe::default()))
             .build();
 
         let sphere = Sphere::builder().build_trait();

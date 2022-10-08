@@ -85,7 +85,7 @@ impl TShape for Plane {
     }
 
     fn shape_intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        if ray.direction.1.abs() < 0.00001 {
+        if ray.direction.1.abs() <= 0.00001 {
             return vec![];
         };
         let t = ray.origin.1.neg() / ray.direction.1;
