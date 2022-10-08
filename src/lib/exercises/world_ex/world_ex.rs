@@ -111,6 +111,6 @@ mod tests {
 
     #[test]
     fn run() {
-         render_world();
+         // render_world();
     }
 }

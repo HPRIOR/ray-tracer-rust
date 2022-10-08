@@ -8,11 +8,12 @@ use crate::{
     colour::colour::Colour,
     geometry::vector::{Operations, Tup, Vector},
     light::light::PointLight,
+    shapes::shape::TShape,
 };
 
 use super::pattern::StripePattern;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct Material {
     pub ambient: f64,
     pub diffuse: f64,
@@ -119,13 +120,15 @@ impl Material {
         eye_vec: Tup,
         norm_vec: Tup,
         in_shadow: bool,
+        object: Box<&dyn TShape>,
     ) -> Colour {
         if in_shadow {
             return Colour::new(0.1, 0.1, 0.1);
         };
         let colour = self
             .pattern
-            .map(|p| p.stripe_at(illum_point))
+            .as_ref()
+            .and_then(|p| p.stripe_at_object(object, illum_point))
             .unwrap_or(self.colour);
 
         let effective_colour = colour.mul(light.intensity);
@@ -172,6 +175,7 @@ mod tests {
         geometry::vector::{point, vector},
         light::light::PointLight,
         material::pattern::StripePattern,
+        shapes::sphere::Sphere,
         utils::test::ApproxEq,
     };
 
@@ -184,8 +188,15 @@ mod tests {
         let eye_v = vector(0.0, 0.0, -1.0);
         let normal_v = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(point(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
-
-        let sut = m.lighting(position, &light, eye_v, normal_v, false);
+        let sphere = Sphere::builder().build_trait();
+        let sut = m.lighting(
+            position,
+            &light,
+            eye_v,
+            normal_v,
+            false,
+            sphere.to_trait_ref(),
+        );
         sut.approx_eq(Colour::new(1.9, 1.9, 1.9));
     }
 
@@ -197,7 +208,15 @@ mod tests {
         let normal_v = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(point(0.0, 0.0, -10.0), Colour::new(1.0, 1.0, 1.0));
 
-        let sut = m.lighting(position, &light, eye_v, normal_v, false);
+        let sphere = Sphere::builder().build_trait();
+        let sut = m.lighting(
+            position,
+            &light,
+            eye_v,
+            normal_v,
+            false,
+            sphere.to_trait_ref(),
+        );
         sut.approx_eq(Colour::new(1.0, 1.0, 1.0));
     }
 
@@ -209,7 +228,15 @@ mod tests {
         let normal_v = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(point(0.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
 
-        let sut = m.lighting(position, &light, eye_v, normal_v, false);
+        let sphere = Sphere::builder().build_trait();
+        let sut = m.lighting(
+            position,
+            &light,
+            eye_v,
+            normal_v,
+            false,
+            sphere.to_trait_ref(),
+        );
         sut.approx_eq(Colour::new(0.7364, 0.7364, 0.7364));
     }
 
@@ -221,7 +248,15 @@ mod tests {
         let normal_v = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(point(0.0, 10.0, -10.0), Colour::new(1.0, 1.0, 1.0));
 
-        let sut = m.lighting(position, &light, eye_v, normal_v, false);
+        let sphere = Sphere::builder().build_trait();
+        let sut = m.lighting(
+            position,
+            &light,
+            eye_v,
+            normal_v,
+            false,
+            sphere.to_trait_ref(),
+        );
         sut.approx_eq(Colour::new(1.6364, 1.6364, 1.6364));
     }
 
@@ -233,7 +268,15 @@ mod tests {
         let normal_v = vector(0.0, 0.0, -1.0);
         let light = PointLight::new(point(0.0, 0.0, 10.0), Colour::new(1.0, 1.0, 1.0));
 
-        let sut = m.lighting(position, &light, eye_v, normal_v, false);
+        let sphere = Sphere::builder().build_trait();
+        let sut = m.lighting(
+            position,
+            &light,
+            eye_v,
+            normal_v,
+            false,
+            sphere.to_trait_ref(),
+        );
         sut.approx_eq(Colour::new(0.1, 0.1, 0.1));
     }
 
@@ -245,7 +288,16 @@ mod tests {
         let light = PointLight::new(point(0.0, 0.0, -10.0), Colour::white());
         let in_shadow = true;
         let material = Material::default();
-        let result = material.lighting(position, &light, eye_v, normal_v, in_shadow);
+
+        let sphere = Sphere::builder().build_trait();
+        let result = material.lighting(
+            position,
+            &light,
+            eye_v,
+            normal_v,
+            in_shadow,
+            sphere.to_trait_ref(),
+        );
         result.approx_eq(Colour::new(0.1, 0.1, 0.1));
     }
 
@@ -261,8 +313,24 @@ mod tests {
             .with_specular(0.0)
             .with_pattern(StripePattern::default())
             .build();
-        let c1 = material.lighting(point(0.9, 0.0, 0.0), &light, eye_v, normal_v, in_shadow);
-        let c2 = material.lighting(point(1.1, 0.0, 0.0), &light, eye_v, normal_v, in_shadow);
+
+        let sphere = Sphere::builder().build_trait();
+        let c1 = material.lighting(
+            point(0.9, 0.0, 0.0),
+            &light,
+            eye_v,
+            normal_v,
+            in_shadow,
+            sphere.to_trait_ref(),
+        );
+        let c2 = material.lighting(
+            point(1.1, 0.0, 0.0),
+            &light,
+            eye_v,
+            normal_v,
+            in_shadow,
+            sphere.to_trait_ref(),
+        );
         c1.approx_eq(Colour::new(1.0, 1.0, 1.0));
         c2.approx_eq(Colour::new(0.0, 0.0, 0.0));
     }

@@ -50,7 +50,7 @@ pub fn render_sphere() {
                 let normal = sphere.normal_at(p);
                 let eye = ray.direction.neg();
                 let colour =
-                    normal.map(|normal| sphere.material().lighting(p, &light, eye, normal, false));
+                    normal.map(|normal| sphere.material().lighting(p, &light, eye, normal, false, sphere_trait.to_trait_ref()));
                 Some((colour, Coord { x: p.0, y: p.1 }))
             } else {
                 None
