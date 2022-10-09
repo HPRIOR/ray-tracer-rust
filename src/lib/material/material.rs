@@ -20,7 +20,8 @@ pub struct Material {
     pub specular: f64,
     pub shininess: f64,
     pub colour: Colour,
-    pattern: Option<Box<dyn TPattern>>
+    pattern: Option<Box<dyn TPattern>>,
+    pub reflectivity: f64,
 }
 
 pub struct MaterialBuilder {
@@ -30,6 +31,7 @@ pub struct MaterialBuilder {
     shininess: f64,
     colour: Colour,
     pattern: Option<Box<dyn TPattern>>,
+    pub reflectivity: f64,
 }
 
 impl Default for MaterialBuilder {
@@ -41,6 +43,7 @@ impl Default for MaterialBuilder {
             shininess: 200.0,
             colour: Colour::new(1.0, 1.0, 1.0),
             pattern: None,
+            reflectivity: 0.0,
         }
     }
 }
@@ -54,6 +57,7 @@ impl MaterialBuilder {
             shininess: self.shininess,
             colour: self.colour,
             pattern: self.pattern,
+            reflectivity: self.reflectivity,
         }
     }
 
@@ -81,6 +85,10 @@ impl MaterialBuilder {
         self.colour = colour;
         self
     }
+    pub fn with_reflectivity(mut self, reflectivity: f64) -> MaterialBuilder{
+        self.reflectivity = reflectivity;
+        self
+    }
 }
 
 impl Material {
@@ -94,6 +102,7 @@ impl Material {
         shininess: f64,
         colour: Colour,
         pattern: Option<Box<dyn TPattern>>,
+        reflectivity: f64,
     ) -> Self {
         Self {
             ambient,
@@ -102,6 +111,7 @@ impl Material {
             shininess,
             colour,
             pattern,
+            reflectivity,
         }
     }
 
@@ -123,7 +133,7 @@ impl Material {
         object: Box<&dyn TShape>,
     ) -> Colour {
         if in_shadow {
-            return Colour::new(0.1, 0.1, 0.1);
+            return Colour::black();
         };
         let colour = self
             .pattern
@@ -164,6 +174,7 @@ impl Default for Material {
             shininess: 200.0,
             colour: Colour::new(1.0, 1.0, 1.0),
             pattern: None,
+            reflectivity: 0.0,
         }
     }
 }
@@ -298,7 +309,7 @@ mod tests {
             in_shadow,
             sphere.to_trait_ref(),
         );
-        result.approx_eq(Colour::new(0.1, 0.1, 0.1));
+        result.approx_eq(Colour::new(0.0, 0.0, 0.0));
     }
 
     #[test]

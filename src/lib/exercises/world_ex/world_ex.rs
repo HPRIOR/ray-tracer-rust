@@ -7,50 +7,61 @@ use crate::{
     exercises::shared::shared::save_canvas,
     geometry::vector::{point, vector},
     light::light::PointLight,
-    material::{material::Material, pattern::{Stripe, Gradient, Ring, Checker}},
+    material::{
+        material::Material,
+        pattern::{Checker, Gradient, Ring, Stripe},
+    },
     matrix::matrix::{Axis, Matrix},
-    shapes::{sphere::Sphere, plane::Plane},
+    shapes::{plane::Plane, sphere::Sphere},
     world::world::World,
 };
 
-fn render_world() {
-    let bg_mat = Material::builder()
-        .with_pattern(Box::new(Checker::default()))
-        .build();
+pub fn render_world(size: usize) {
+    let bg_colour = Colour::new(0.5, 0.5, 0.5);
 
     let floor = Plane::builder()
-        .with_material(bg_mat)
+        .with_material(
+            Material::builder()
+                .with_pattern(Box::new(Stripe::new(
+                    Colour::new(0.5, 0.5, 0.1),
+                    Colour::new(0.1, 0.6, 0.9),
+                    Matrix::ident(),
+                )))
+                .with_diffuse(0.7)
+                .with_specular(0.3)
+                .with_reflectivity(0.5)
+                .build(),
+        )
         .build_trait();
 
-    // let l_wall = Sphere::builder()
-    //     .with_transform(
-    //         Matrix::ident()
-    //             .scale(10.0, 0.01, 10.0)
-    //             .rotate(Axis::X, PI / 2.0)
-    //             .rotate(Axis::Y, -PI / 4.0)
-    //             .translate(0.0, 0.0, 5.0),
-    //     )
-    //     .with_material(bg_mat)
-    //     .build_trait();
-    //
-    // let r_wall = Sphere::builder()
-    //     .with_transform(
-    //         Matrix::ident()
-    //             .scale(10.0, 0.01, 10.0)
-    //             .rotate(Axis::X, PI / 2.0)
-    //             .rotate(Axis::Y, PI / 4.0)
-    //             .translate(0.0, 0.0, 5.0),
-    //     )
-    //     .with_material(bg_mat)
-    //     .build_trait();
+    let l_wall = Plane::builder()
+        .with_transform(
+            Matrix::ident()
+                .rotate(Axis::X, PI / 2.0)
+                .rotate(Axis::Y, -PI / 4.0)
+                .translate(0.0, 0.0, 5.0),
+        )
+        .with_material(Material::builder().with_colour(bg_colour).build())
+        .build_trait();
+
+    let r_wall = Plane::builder()
+        .with_transform(
+            Matrix::ident()
+                .rotate(Axis::X, PI / 2.0)
+                .rotate(Axis::Y, PI / 4.0)
+                .translate(0.0, 0.0, 5.0),
+        )
+        .with_material(Material::builder().with_colour(bg_colour).build())
+        .build_trait();
 
     let middle = Sphere::builder()
         .with_transform(Matrix::ident().translate(0.33, 0.9, 0.0))
         .with_material(
             Material::builder()
                 .with_colour(Colour::new(0.1, 1.0, 0.5))
-                .with_diffuse(0.7)
+                .with_diffuse(0.6)
                 .with_specular(0.3)
+                .with_reflectivity(0.2)
                 .build(),
         )
         .build_trait();
@@ -86,11 +97,11 @@ fn render_world() {
         .build_trait();
 
     let world = World::new(
-        vec![ floor],
+        vec![floor, r_wall, l_wall, middle],
         PointLight::new(point(-10.0, 10.0, -10.0), Colour::white()),
     );
 
-    let mut camera = Camera::new(100, 100, PI / 3.0);
+    let mut camera = Camera::new(size, size, PI / 3.0);
     camera.transform = Matrix::view_transform(
         point(0.0, 1.5, -5.0),
         point(0.0, 1.0, 0.0),
@@ -99,15 +110,17 @@ fn render_world() {
 
     let canvas = camera.render(&world);
 
-    save_canvas("world_ex", &canvas)
+    save_canvas("world_ex_hq", &canvas)
 }
 
 #[cfg(test)]
 mod tests {
     use crate::exercises::world_ex::world_ex::render_world;
 
+
     #[test]
     fn run() {
-         render_world();
+        render_world(3000);
     }
+
 }

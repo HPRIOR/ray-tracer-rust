@@ -1,1 +1,1 @@
-mod world_ex;
+pub mod world_ex;

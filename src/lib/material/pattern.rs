@@ -5,7 +5,7 @@ use crate::{
     colour::colour::Colour, geometry::vector::Tup, matrix::matrix::Matrix, shapes::shape::TShape,
 };
 
-pub trait TPattern: Send + Sync + Debug {
+pub trait TPattern: Send + Sync + Debug  {
     fn transform(&self) -> &Matrix;
     fn pattern_at(&self, point: Tup) -> Colour;
     fn pattern_at_object(&self, object: Box<&dyn TShape>, world_point: Tup) -> Option<Colour> {
@@ -20,7 +20,7 @@ pub trait TPattern: Send + Sync + Debug {
 
 /// --- Stripe --- ///
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Stripe {
     a: Colour,
     b: Colour,
@@ -60,7 +60,7 @@ impl Stripe {
 
 /// --- Gradient --- ///
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Gradient {
     a: Colour,
     b: Colour,
@@ -96,7 +96,7 @@ impl Gradient {
 }
 /// --- Ring --- ///
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ring {
     a: Colour,
     b: Colour,
@@ -135,7 +135,7 @@ impl Ring {
 }
 /// --- Checker --- ///
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Checker {
     a: Colour,
     b: Colour,

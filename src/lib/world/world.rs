@@ -9,7 +9,6 @@ use crate::{
     shapes::{shape::TShape, sphere::Sphere},
 };
 
-
 pub struct World {
     pub objects: Vec<Box<dyn TShape>>,
     pub light: PointLight,
@@ -20,16 +19,34 @@ impl World {
         Self { objects, light }
     }
 
-    pub fn color_at(&self, ray: &Ray) -> Colour {
+    pub fn color_at(&self, ray: &Ray, ref_lim: u32) -> Colour {
         let intersections: Vec<Intersection> = ray.intersect_objects(&self.objects);
 
         let maybe_intersection = intersections.hit();
 
-        let maybe_shade_hit = maybe_intersection
-            .and_then(|i| ray.prep_comps(i))
-            .map(|pc| pc.shade_hit(&self.light, self.is_shadowed(pc.over_point)));
+        let maybe_precomp = maybe_intersection.and_then(|i| ray.prep_comps(i));
 
-        maybe_shade_hit.unwrap_or(Colour::black())
+        let is_shadowed = maybe_precomp
+            .as_ref()
+            .map(|pc| self.is_shadowed(pc.over_point))
+            .unwrap_or(false);
+
+        if is_shadowed {
+            return Colour::black();
+        }
+
+        // passing is shadow into shade hit seems slightly reduntant now
+
+        let maybe_surface = maybe_precomp
+            .as_ref()
+            .map(|pc| pc.shade_hit(&self.light, is_shadowed));
+
+        let reflected = self.reflected_colour(maybe_precomp, ref_lim - 1);
+
+        // if in shadow should this just return black?
+        maybe_surface
+            .map(|surface| surface + reflected)
+            .unwrap_or(Colour::black())
     }
 
     fn is_shadowed(&self, point: Tup) -> bool {
@@ -45,6 +62,23 @@ impl World {
 
         maybe_hit.map(|h| h.at < distance).unwrap_or(false)
     }
+
+    fn reflected_colour(&self, comps: Option<PreComp>, ref_lim: u32) -> Colour {
+        if ref_lim == 0 {
+            return Colour::black();
+        }
+        if let Some(comps) = comps {
+            if comps.object.material().reflectivity == 0.0 {
+                Colour::black()
+            } else {
+                let reflect_ray = Ray::new(comps.over_point, comps.reflect_v);
+                let colour = self.color_at(&reflect_ray, ref_lim);
+                colour * comps.object.material().reflectivity
+            }
+        } else {
+            Colour::black()
+        }
+    }
 }
 
 impl Default for World {
@@ -57,7 +91,8 @@ impl Default for World {
                 0.2,
                 200.0,
                 Colour::new(0.8, 1.0, 0.6),
-                None
+                None,
+                0.0,
             ))
             .build_trait();
         let s2 = Sphere::builder()
@@ -77,9 +112,10 @@ mod test {
         colour::colour::Colour,
         geometry::vector::{point, vector},
         light::{self, light::PointLight},
+        material::material::Material,
         matrix::matrix::Matrix,
         ray::ray::{Intersection, Ray},
-        shapes::{shape::TShape, sphere::Sphere},
+        shapes::{plane::Plane, shape::TShape, sphere::Sphere},
         utils::test::ApproxEq,
         world,
     };
@@ -152,7 +188,7 @@ mod test {
         let intersect = Intersection::new(4.0, s2_copy.to_trait_ref());
         let comps = ray.prep_comps(&intersect).unwrap();
         let shade_hit = comps.shade_hit(&light.clone(), world.is_shadowed(comps.point));
-        shade_hit.approx_eq(Colour::new(0.1, 0.1, 0.1));
+        shade_hit.approx_eq(Colour::new(0.0, 0.0, 0.0));
     }
 
     #[test]
@@ -194,5 +230,118 @@ mod test {
         let p = point(-2.0, 2.0, -2.0);
         let sut = w.is_shadowed(p);
         assert_eq!(sut, false)
+    }
+    #[test]
+    fn reflected_colour_for_non_reflective_material() {
+        let s1 = Sphere::builder()
+            .with_transform(Matrix::ident())
+            .with_material(Material::new(
+                0.1,
+                0.7,
+                0.2,
+                200.0,
+                Colour::new(0.8, 1.0, 0.6),
+                None,
+                0.0,
+            ))
+            .build_trait();
+        let s2 = Sphere::builder()
+            .with_material(Material::builder().with_ambient(1.0).build())
+            .with_transform(Matrix::scaling(0.5, 0.5, 0.5))
+            .build_trait();
+
+        let world = World::new(vec![s1, s2], PointLight::default());
+        let r = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
+
+        let i = Intersection::new(1.0, world.objects[1].to_trait_ref());
+        let comps = r.prep_comps(&i);
+        let colour = world.reflected_colour(comps, 5);
+        assert_eq!(colour, Colour::black())
+    }
+    #[test]
+    fn reflected_colour_for_reflective_material() {
+        let s1 = Sphere::builder()
+            .with_transform(Matrix::ident())
+            .with_material(Material::new(
+                0.1,
+                0.7,
+                0.2,
+                200.0,
+                Colour::new(0.8, 1.0, 0.6),
+                None,
+                0.0,
+            ))
+            .build_trait();
+        let s2 = Sphere::builder()
+            .with_transform(Matrix::scaling(0.5, 0.5, 0.5))
+            .build_trait();
+        let p1 = Plane::builder()
+            .with_material(Material::builder().with_reflectivity(0.5).build())
+            .with_transform(Matrix::translation(0.0, -1.0, 0.0))
+            .build_trait();
+
+        let world = World::new(vec![p1, s1, s2], PointLight::default());
+        let r = Ray::new(
+            point(0.0, 0.0, -3.0),
+            vector(0.0, -(2.0_f64.sqrt()) / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+
+        let i = Intersection::new(2.0_f64.sqrt(), world.objects[0].to_trait_ref());
+        let comps = r.prep_comps(&i);
+        let colour = world.reflected_colour(comps, 5);
+        colour.approx_eq(Colour::new(0.19033, 0.23791, 0.14274))
+    }
+
+    #[test]
+    fn reflected_colour_for_reflective_material_with_shade_hit() {
+        let s1 = Sphere::builder()
+            .with_transform(Matrix::ident())
+            .with_material(Material::new(
+                0.1,
+                0.7,
+                0.2,
+                200.0,
+                Colour::new(0.8, 1.0, 0.6),
+                None,
+                0.0,
+            ))
+            .build_trait();
+        let s2 = Sphere::builder()
+            .with_transform(Matrix::scaling(0.5, 0.5, 0.5))
+            .build_trait();
+        let p1 = Plane::builder()
+            .with_material(Material::builder().with_reflectivity(0.5).build())
+            .with_transform(Matrix::translation(0.0, -1.0, 0.0))
+            .build_trait();
+
+        let world = World::new(vec![p1, s1, s2], PointLight::default());
+        let r = Ray::new(
+            point(0.0, 0.0, -3.0),
+            vector(0.0, -(2.0_f64.sqrt()) / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+
+        let i = Intersection::new(2.0_f64.sqrt(), world.objects[0].to_trait_ref());
+        let comps = r.prep_comps(&i).unwrap();
+        let colour = world.color_at(&r, 5);
+        colour.approx_eq(Colour::new(0.87675, 0.92434, 0.82918))
+    }
+    #[test]
+    fn reflection_does_not_cause_stack_overflow() {
+        let p1 = Plane::builder()
+            .with_material(Material::builder().with_reflectivity(1.0).build())
+            .with_transform(Matrix::translation(0.0, -1.0, 0.0))
+            .build_trait();
+        let p2 = Plane::builder()
+            .with_material(Material::builder().with_reflectivity(1.0).build())
+            .with_transform(Matrix::translation(0.0, 1.0, 0.0))
+            .build_trait();
+
+        let world = World::new(
+            vec![p1, p2],
+            PointLight::new(point(0.0, 0.0, 0.0), Colour::white()),
+        );
+
+        let ray = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 1.0, 0.0));
+        let _ = world.color_at(&ray, 5);
     }
 }

@@ -50,12 +50,13 @@ impl<'a> Hit for Vec<Intersection<'a>> {
 
 // ----------- PreComp ----------- //
 pub struct PreComp<'a> {
-    object: Box<&'a (dyn TShape + 'a)>,
+    pub object: Box<&'a (dyn TShape + 'a)>,
     pub point: Tup,
     pub over_point: Tup,
     eye_v: Tup,
     norm_v: Tup,
     inside: bool,
+    pub reflect_v: Tup,
 }
 
 impl<'a> PreComp<'a> {
@@ -66,7 +67,7 @@ impl<'a> PreComp<'a> {
             self.eye_v,
             self.norm_v,
             is_shadow,
-            self.object.to_trait_ref()
+            self.object.to_trait_ref(),
         )
     }
 }
@@ -116,6 +117,7 @@ impl Ray {
                 eye_v,
                 norm_v: norm_v_result,
                 inside: is_inside,
+                reflect_v: self.direction.reflect(norm_v.neg()),
             }
         })
     }
@@ -135,7 +137,7 @@ mod tests {
         geometry::vector::{point, vector},
         material::material::Material,
         matrix::matrix::Matrix,
-        shapes::{shape::TShape, sphere::Sphere},
+        shapes::{plane::Plane, shape::TShape, sphere::Sphere},
     };
 
     use super::{Hit, Intersection, Ray};
@@ -384,7 +386,8 @@ mod tests {
                 0.2,
                 200.0,
                 Colour::new(0.8, 1.0, 0.6),
-                None
+                None,
+                0.0,
             ))
             .build_trait();
         let s2 = Sphere::builder()
@@ -399,5 +402,20 @@ mod tests {
         assert_eq!(sut[1].at, 4.5);
         assert_eq!(sut[2].at, 5.5);
         assert_eq!(sut[3].at, 6.0);
+    }
+
+    #[test]
+    fn precomputing_the_reflective_vector() {
+        let shape = Plane::builder().build_trait();
+        let ray = Ray::new(
+            point(0.0, 1.0, -1.0),
+            vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let i = Intersection::new(2.0_f64.sqrt(), shape.to_trait_ref());
+        let comps = ray.prep_comps(&i).unwrap();
+        assert_eq!(
+            comps.reflect_v,
+            vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
+        );
     }
 }

@@ -78,7 +78,7 @@ impl Camera {
                     .map(|x| {
                         let maybe_ray = self.ray_for_pixel(x as f64, y as f64);
                         let result: Option<(usize, usize, Colour)> =
-                            maybe_ray.map(|r| world.color_at(&r)).map(|c| (x, y, c));
+                            maybe_ray.map(|r| world.color_at(&r, 5)).map(|c| (x, y, c));
                         result
                     })
                     .collect::<Vec<Option<(usize, usize, Colour)>>>()
@@ -88,6 +88,7 @@ impl Camera {
             canvas.set_pixel(x, y, c);
         });
         canvas
+
     }
 }
 
