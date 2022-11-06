@@ -1,5 +1,8 @@
 #![allow(dead_code)]
-use crate::{colour::colour::Colour, geometry::vector::{Tup, point}};
+use crate::{
+    colour::colour::Colour,
+    geometry::vector::{point, Tup},
+};
 
 #[derive(Clone)]
 pub struct PointLight {

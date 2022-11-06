@@ -88,7 +88,6 @@ impl Camera {
             canvas.set_pixel(x, y, c);
         });
         canvas
-
     }
 }
 

@@ -12,7 +12,7 @@ use crate::{
         pattern::{Checker, Gradient, Ring, Stripe},
     },
     matrix::matrix::{Axis, Matrix},
-    shapes::{plane::Plane, sphere::Sphere},
+    shapes::{plane::Plane, shape::TShapeBuilder, sphere::Sphere},
     world::world::World,
 };
 
@@ -117,10 +117,8 @@ pub fn render_world(size: usize) {
 mod tests {
     use crate::exercises::world_ex::world_ex::render_world;
 
-
     #[test]
     fn run() {
-        render_world(3000);
+        // render_world(3000);
     }
-
 }

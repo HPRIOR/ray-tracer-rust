@@ -22,6 +22,8 @@ pub struct Material {
     pub colour: Colour,
     pattern: Option<Box<dyn TPattern>>,
     pub reflectivity: f64,
+    transparency: f64,
+    refractive_index: f64,
 }
 
 pub struct MaterialBuilder {
@@ -32,6 +34,8 @@ pub struct MaterialBuilder {
     colour: Colour,
     pattern: Option<Box<dyn TPattern>>,
     pub reflectivity: f64,
+    refractive_index: f64,
+    transparency: f64,
 }
 
 impl Default for MaterialBuilder {
@@ -44,6 +48,8 @@ impl Default for MaterialBuilder {
             colour: Colour::new(1.0, 1.0, 1.0),
             pattern: None,
             reflectivity: 0.0,
+            transparency: 0.0,
+            refractive_index: 1.0,
         }
     }
 }
@@ -58,6 +64,8 @@ impl MaterialBuilder {
             colour: self.colour,
             pattern: self.pattern,
             reflectivity: self.reflectivity,
+            transparency: self.transparency,
+            refractive_index: self.refractive_index,
         }
     }
 
@@ -85,8 +93,16 @@ impl MaterialBuilder {
         self.colour = colour;
         self
     }
-    pub fn with_reflectivity(mut self, reflectivity: f64) -> MaterialBuilder{
+    pub fn with_reflectivity(mut self, reflectivity: f64) -> MaterialBuilder {
         self.reflectivity = reflectivity;
+        self
+    }
+    pub fn with_transparency(mut self, transparency: f64) -> MaterialBuilder {
+        self.transparency = transparency;
+        self
+    }
+    pub fn with_refractive_index(mut self, refractive_index: f64) -> MaterialBuilder {
+        self.refractive_index = refractive_index;
         self
     }
 }
@@ -95,7 +111,7 @@ impl Material {
     pub fn builder() -> MaterialBuilder {
         MaterialBuilder::default()
     }
-    pub fn new(
+    fn new(
         ambient: f64,
         diffuse: f64,
         specular: f64,
@@ -103,6 +119,8 @@ impl Material {
         colour: Colour,
         pattern: Option<Box<dyn TPattern>>,
         reflectivity: f64,
+        transparency: f64,
+        refractive_index: f64,
     ) -> Self {
         Self {
             ambient,
@@ -112,6 +130,8 @@ impl Material {
             colour,
             pattern,
             reflectivity,
+            transparency,
+            refractive_index,
         }
     }
 
@@ -175,6 +195,8 @@ impl Default for Material {
             colour: Colour::new(1.0, 1.0, 1.0),
             pattern: None,
             reflectivity: 0.0,
+            transparency: 0.0,
+            refractive_index: 1.0,
         }
     }
 }
@@ -186,7 +208,7 @@ mod tests {
         geometry::vector::{point, vector},
         light::light::PointLight,
         material::pattern::Stripe,
-        shapes::sphere::Sphere,
+        shapes::{shape::TShapeBuilder, sphere::Sphere},
         utils::test::ApproxEq,
     };
 

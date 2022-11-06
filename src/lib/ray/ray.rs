@@ -14,6 +14,7 @@ use crate::{
 /// hit object
 #[derive(Debug)]
 pub struct Intersection<'a> {
+    /// Where on an object a ray intersects
     pub at: f64,
     pub object: Box<&'a (dyn TShape + 'a)>,
 }
@@ -137,10 +138,23 @@ mod tests {
         geometry::vector::{point, vector},
         material::material::Material,
         matrix::matrix::Matrix,
-        shapes::{plane::Plane, shape::TShape, sphere::Sphere},
+        shapes::{
+            plane::Plane,
+            shape::{TShape, TShapeBuilder},
+            sphere::Sphere,
+        },
     };
 
     use super::{Hit, Intersection, Ray};
+
+    fn glass_sphere(transform: Matrix) -> Sphere {
+        Sphere::builder().with_transform(transform).with_material(
+            Material::builder()
+                .with_transparency(1.0)
+                .with_refractive_index(1.5)
+                .build(),
+        ).build()
+    }
 
     #[test]
     fn ray_can_be_created_with_origin_and_direction() {
@@ -380,15 +394,13 @@ mod tests {
     fn can_get_ordered_intersects_with_multiple_objects() {
         let s1 = Sphere::builder()
             .with_transform(Matrix::ident())
-            .with_material(Material::new(
-                0.1,
-                0.7,
-                0.2,
-                200.0,
-                Colour::new(0.8, 1.0, 0.6),
-                None,
-                0.0,
-            ))
+            .with_material(
+                Material::builder()
+                    .with_diffuse(0.7)
+                    .with_specular(0.2)
+                    .with_colour(Colour::new(0.8, 1.0, 0.6))
+                    .build(),
+            )
             .build_trait();
         let s2 = Sphere::builder()
             .with_transform(Matrix::scaling(0.5, 0.5, 0.5))

@@ -9,7 +9,7 @@ use crate::{
     utils::math_ext::Square,
 };
 
-use super::shape::TShape;
+use super::shape::{TShape, TShapeBuilder};
 
 pub struct SphereBuilder {
     transform: Option<Matrix>,
@@ -25,24 +25,23 @@ impl Default for SphereBuilder {
     }
 }
 
-impl SphereBuilder {
-    fn new() -> Self {
-        SphereBuilder::default()
-    }
-}
 
-impl SphereBuilder {
-    pub fn with_transform(mut self, matrix: Matrix) -> SphereBuilder {
+impl TShapeBuilder for SphereBuilder {
+    type ConcreteOutput = Sphere;
+    type AbstractOutput = Box<dyn TShape>;
+
+
+    fn with_transform(mut self, matrix: Matrix) -> Self {
         self.transform = Some(matrix);
         self
     }
 
-    pub fn with_material(mut self, material: Material) -> SphereBuilder {
+    fn with_material(mut self, material: Material) -> Self {
         self.material = Some(material);
         self
     }
 
-    pub fn build(self) -> Sphere {
+    fn build(self) -> Self::ConcreteOutput {
         Sphere {
             id: Uuid::new_v4(),
             transform: self.transform.unwrap_or(Matrix::ident()),
@@ -50,7 +49,7 @@ impl SphereBuilder {
         }
     }
 
-    pub fn build_trait(self) -> Box<dyn TShape> {
+    fn build_trait(self) -> Self::AbstractOutput {
         Box::new(Sphere {
             id: Uuid::new_v4(),
             transform: self.transform.unwrap_or(Matrix::ident()),
@@ -137,7 +136,7 @@ mod tests {
     use crate::{
         geometry::vector::{point, vector},
         matrix::matrix::{Axis, Matrix},
-        shapes::shape::TShape,
+        shapes::shape::{TShape, TShapeBuilder},
         utils::test::ApproxEq,
     };
 

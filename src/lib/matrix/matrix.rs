@@ -14,7 +14,7 @@ pub enum Axis {
     Y,
     Z,
 }
-impl Default for Matrix{
+impl Default for Matrix {
     fn default() -> Self {
         Matrix::ident()
     }

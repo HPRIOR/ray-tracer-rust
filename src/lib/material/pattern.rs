@@ -5,7 +5,7 @@ use crate::{
     colour::colour::Colour, geometry::vector::Tup, matrix::matrix::Matrix, shapes::shape::TShape,
 };
 
-pub trait TPattern: Send + Sync + Debug  {
+pub trait TPattern: Send + Sync + Debug {
     fn transform(&self) -> &Matrix;
     fn pattern_at(&self, point: Tup) -> Colour;
     fn pattern_at_object(&self, object: Box<&dyn TShape>, world_point: Tup) -> Option<Colour> {
@@ -180,7 +180,7 @@ mod tests {
         geometry::vector::point,
         material::pattern::{Checker, Ring, TPattern},
         matrix::matrix::Matrix,
-        shapes::sphere::Sphere,
+        shapes::{shape::TShapeBuilder, sphere::Sphere},
     };
 
     use super::{Gradient, Stripe};

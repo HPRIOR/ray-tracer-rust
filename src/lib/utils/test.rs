@@ -54,12 +54,12 @@ impl ApproxEq for Matrix {
     }
 }
 
-impl ApproxEq for f64{
+impl ApproxEq for f64 {
     type Type = f64;
 
     fn approx_eq(self, other: Self::Type) {
         let result = compare(self, other);
-        _ = result.map_err(|err| panic!("{}",err));
+        _ = result.map_err(|err| panic!("{}", err));
     }
 }
 
@@ -151,12 +151,12 @@ mod tests {
     }
 
     #[test]
-    fn approx_floats_no_panic(){
+    fn approx_floats_no_panic() {
         0.01.approx_eq(0.009999999999998);
     }
     #[test]
     #[should_panic]
-    fn approx_floats_will_panic(){
+    fn approx_floats_will_panic() {
         0.01.approx_eq(0.00099999999998);
     }
 }

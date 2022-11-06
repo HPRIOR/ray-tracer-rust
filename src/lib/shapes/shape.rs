@@ -7,7 +7,7 @@ use crate::{
     ray::ray::{Intersection, Ray},
 };
 
-pub trait TShape: Sync + Send + Debug{
+pub trait TShape: Sync + Send + Debug {
     fn material(&self) -> &Material;
     fn transform(&self) -> &Matrix;
 
@@ -44,4 +44,14 @@ pub trait TShape: Sync + Send + Debug{
 
     /// required to pass self to intersection, which must accept a reference to any shape
     fn to_trait_ref(&self) -> Box<&dyn TShape>;
+}
+
+pub trait TShapeBuilder {
+    type ConcreteOutput;
+    type AbstractOutput;
+    
+    fn with_transform(self, matrix: Matrix) -> Self;
+    fn with_material(self, material: Material) -> Self;
+    fn build(self) -> Self::ConcreteOutput;
+    fn build_trait(self) -> Self::AbstractOutput;
 }

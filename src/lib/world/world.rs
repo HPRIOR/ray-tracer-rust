@@ -6,7 +6,10 @@ use crate::{
     material::material::Material,
     matrix::matrix::Matrix,
     ray::ray::{Hit, Intersection, PreComp, Ray},
-    shapes::{shape::TShape, sphere::Sphere},
+    shapes::{
+        shape::{TShape, TShapeBuilder},
+        sphere::Sphere,
+    },
 };
 
 pub struct World {
@@ -85,15 +88,13 @@ impl Default for World {
     fn default() -> Self {
         let s1 = Sphere::builder()
             .with_transform(Matrix::ident())
-            .with_material(Material::new(
-                0.1,
-                0.7,
-                0.2,
-                200.0,
-                Colour::new(0.8, 1.0, 0.6),
-                None,
-                0.0,
-            ))
+            .with_material(
+                Material::builder()
+                    .with_diffuse(0.7)
+                    .with_specular(0.2)
+                    .with_colour(Colour::new(0.8, 1.0, 0.6))
+                    .build(),
+            )
             .build_trait();
         let s2 = Sphere::builder()
             .with_transform(Matrix::scaling(0.5, 0.5, 0.5))
@@ -115,7 +116,11 @@ mod test {
         material::material::Material,
         matrix::matrix::Matrix,
         ray::ray::{Intersection, Ray},
-        shapes::{plane::Plane, shape::TShape, sphere::Sphere},
+        shapes::{
+            plane::Plane,
+            shape::{TShape, TShapeBuilder},
+            sphere::Sphere,
+        },
         utils::test::ApproxEq,
         world,
     };
@@ -235,15 +240,13 @@ mod test {
     fn reflected_colour_for_non_reflective_material() {
         let s1 = Sphere::builder()
             .with_transform(Matrix::ident())
-            .with_material(Material::new(
-                0.1,
-                0.7,
-                0.2,
-                200.0,
-                Colour::new(0.8, 1.0, 0.6),
-                None,
-                0.0,
-            ))
+            .with_material(
+                Material::builder()
+                    .with_diffuse(0.7)
+                    .with_specular(0.2)
+                    .with_colour(Colour::new(0.8, 1.0, 0.6))
+                    .build(),
+            )
             .build_trait();
         let s2 = Sphere::builder()
             .with_material(Material::builder().with_ambient(1.0).build())
@@ -262,15 +265,13 @@ mod test {
     fn reflected_colour_for_reflective_material() {
         let s1 = Sphere::builder()
             .with_transform(Matrix::ident())
-            .with_material(Material::new(
-                0.1,
-                0.7,
-                0.2,
-                200.0,
-                Colour::new(0.8, 1.0, 0.6),
-                None,
-                0.0,
-            ))
+            .with_material(
+                Material::builder()
+                    .with_diffuse(0.7)
+                    .with_specular(0.9)
+                    .with_colour(Colour::new(0.8, 1.0, 0.6))
+                    .build(),
+            )
             .build_trait();
         let s2 = Sphere::builder()
             .with_transform(Matrix::scaling(0.5, 0.5, 0.5))
@@ -296,15 +297,14 @@ mod test {
     fn reflected_colour_for_reflective_material_with_shade_hit() {
         let s1 = Sphere::builder()
             .with_transform(Matrix::ident())
-            .with_material(Material::new(
-                0.1,
-                0.7,
-                0.2,
-                200.0,
-                Colour::new(0.8, 1.0, 0.6),
-                None,
-                0.0,
-            ))
+            .with_material(
+                Material::builder()
+                    .with_ambient(0.1)
+                    .with_diffuse(0.7)
+                    .with_specular(0.2)
+                    .with_colour(Colour::new(0.8, 1.0, 0.6))
+                    .build(),
+            )
             .build_trait();
         let s2 = Sphere::builder()
             .with_transform(Matrix::scaling(0.5, 0.5, 0.5))
@@ -325,6 +325,7 @@ mod test {
         let colour = world.color_at(&r, 5);
         colour.approx_eq(Colour::new(0.87675, 0.92434, 0.82918))
     }
+
     #[test]
     fn reflection_does_not_cause_stack_overflow() {
         let p1 = Plane::builder()

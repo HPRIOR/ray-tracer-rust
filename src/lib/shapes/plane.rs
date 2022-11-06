@@ -89,8 +89,7 @@ impl TShape for Plane {
             return vec![];
         };
         let t = ray.origin.1.neg() / ray.direction.1;
-        return vec![Intersection::new(t, self.to_trait_ref())]
-
+        return vec![Intersection::new(t, self.to_trait_ref())];
     }
 
     fn to_trait_ref(&self) -> Box<&dyn TShape> {
@@ -162,5 +161,4 @@ mod tests {
         let object = *i.object.as_ref();
         assert!(std::ptr::eq(*i.object.as_ref(), *p1.to_trait_ref()));
     }
-
 }
