@@ -27,7 +27,7 @@ impl World {
 
         let maybe_intersection = intersections.hit();
 
-        let maybe_precomp = maybe_intersection.and_then(|i| ray.prep_comps(i));
+        let maybe_precomp = maybe_intersection.and_then(|i| ray.prep_comp(i, &vec![&i]));
 
         let is_shadowed = maybe_precomp
             .as_ref()
@@ -159,7 +159,7 @@ mod test {
         let r = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = &w.objects[0];
         let i = Intersection::new(4.0, shape.to_trait_ref());
-        let comp = r.prep_comps(&i).unwrap();
+        let comp = r.prep_comp(&i, &vec![&i]).unwrap();
         let c = comp.shade_hit(&w.light, false);
         c.approx_eq(Colour::new(0.38066, 0.47583, 0.2855));
     }
@@ -170,7 +170,7 @@ mod test {
         let r = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         let shape = &w.objects[1];
         let i = Intersection::new(0.5, shape.to_trait_ref());
-        let comp = r.prep_comps(&i).unwrap();
+        let comp = r.prep_comp(&i, &vec![&i]).unwrap();
         let c = comp.shade_hit(&w.light, false);
         c.approx_eq(Colour::new(0.90498, 0.90498, 0.90498));
     }
@@ -191,7 +191,7 @@ mod test {
 
         let ray = Ray::new(point(0.0, 0.0, 5.0), vector(0.0, 0.0, 1.0));
         let intersect = Intersection::new(4.0, s2_copy.to_trait_ref());
-        let comps = ray.prep_comps(&intersect).unwrap();
+        let comps = ray.prep_comp(&intersect, &vec![&intersect]).unwrap();
         let shade_hit = comps.shade_hit(&light.clone(), world.is_shadowed(comps.point));
         shade_hit.approx_eq(Colour::new(0.0, 0.0, 0.0));
     }
@@ -203,7 +203,7 @@ mod test {
             .with_transform(Matrix::translation(0.0, 0.0, 1.0))
             .build_trait();
         let intersection = Intersection::new(5.0, shape.to_trait_ref());
-        let comps = ray.prep_comps(&intersection).unwrap();
+        let comps = ray.prep_comp(&intersection, &vec![&intersection]).unwrap();
         assert!(comps.over_point.2 < (-0.00001) / 2.0);
         assert!(comps.point.2 > comps.over_point.2);
     }
@@ -257,7 +257,7 @@ mod test {
         let r = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
 
         let i = Intersection::new(1.0, world.objects[1].to_trait_ref());
-        let comps = r.prep_comps(&i);
+        let comps = r.prep_comp(&i, &vec![&i]);
         let colour = world.reflected_colour(comps, 5);
         assert_eq!(colour, Colour::black())
     }
@@ -288,7 +288,7 @@ mod test {
         );
 
         let i = Intersection::new(2.0_f64.sqrt(), world.objects[0].to_trait_ref());
-        let comps = r.prep_comps(&i);
+        let comps = r.prep_comp(&i, &vec![&i]);
         let colour = world.reflected_colour(comps, 5);
         colour.approx_eq(Colour::new(0.19033, 0.23791, 0.14274))
     }
@@ -321,7 +321,7 @@ mod test {
         );
 
         let i = Intersection::new(2.0_f64.sqrt(), world.objects[0].to_trait_ref());
-        let comps = r.prep_comps(&i).unwrap();
+        let comps = r.prep_comp(&i, &vec![&i]).unwrap();
         let colour = world.color_at(&r, 5);
         colour.approx_eq(Colour::new(0.87675, 0.92434, 0.82918))
     }

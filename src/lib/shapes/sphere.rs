@@ -25,11 +25,9 @@ impl Default for SphereBuilder {
     }
 }
 
-
 impl TShapeBuilder for SphereBuilder {
     type ConcreteOutput = Sphere;
     type AbstractOutput = Box<dyn TShape>;
-
 
     fn with_transform(mut self, matrix: Matrix) -> Self {
         self.transform = Some(matrix);

@@ -49,7 +49,7 @@ pub trait TShape: Sync + Send + Debug {
 pub trait TShapeBuilder {
     type ConcreteOutput;
     type AbstractOutput;
-    
+
     fn with_transform(self, matrix: Matrix) -> Self;
     fn with_material(self, material: Material) -> Self;
     fn build(self) -> Self::ConcreteOutput;

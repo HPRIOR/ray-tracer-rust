@@ -58,6 +58,8 @@ pub struct PreComp<'a> {
     norm_v: Tup,
     inside: bool,
     pub reflect_v: Tup,
+    n1: f64,
+    n2: f64,
 }
 
 impl<'a> PreComp<'a> {
@@ -100,7 +102,11 @@ impl Ray {
         result
     }
 
-    pub fn prep_comps<'a>(&'a self, intersection: &Intersection<'a>) -> Option<PreComp> {
+    pub fn prep_comp<'a>(
+        &'a self,
+        intersection: &Intersection<'a>,
+        xs: &Vec<&Intersection<'a>>,
+    ) -> Option<PreComp> {
         let object = intersection.object.to_trait_ref();
         let p = self.position(intersection.at);
         let eye_v = self.direction.neg();
@@ -119,6 +125,8 @@ impl Ray {
                 norm_v: norm_v_result,
                 inside: is_inside,
                 reflect_v: self.direction.reflect(norm_v.neg()),
+                n1: 1.1,
+                n2: 1.2,
             }
         })
     }
@@ -147,13 +155,16 @@ mod tests {
 
     use super::{Hit, Intersection, Ray};
 
-    fn glass_sphere(transform: Matrix) -> Sphere {
-        Sphere::builder().with_transform(transform).with_material(
-            Material::builder()
-                .with_transparency(1.0)
-                .with_refractive_index(1.5)
-                .build(),
-        ).build()
+    fn glass_sphere(transform: Matrix, ref_index: f64) -> Sphere {
+        Sphere::builder()
+            .with_transform(transform)
+            .with_material(
+                Material::builder()
+                    .with_transparency(1.0)
+                    .with_refractive_index(ref_index)
+                    .build(),
+            )
+            .build()
     }
 
     #[test]
@@ -357,7 +368,7 @@ mod tests {
             at: 4.0,
             object: shape.to_trait_ref(),
         };
-        let comps = ray.prep_comps(&i).unwrap();
+        let comps = ray.prep_comp(&i, &vec![&i]).unwrap();
         let comps_obj = comps.object;
         let intersect_obj = i.object;
         // intersect and precom reference the same obj
@@ -373,7 +384,7 @@ mod tests {
         let ray = Ray::new(point(0.0, 0.0, -5.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::builder().build_trait();
         let i = Intersection::new(4.0, shape.to_trait_ref());
-        let comps = ray.prep_comps(&i).unwrap();
+        let comps = ray.prep_comp(&i, &vec![&i]).unwrap();
         assert_eq!(comps.inside, false);
     }
 
@@ -382,7 +393,7 @@ mod tests {
         let ray = Ray::new(point(0.0, 0.0, 0.0), vector(0.0, 0.0, 1.0));
         let shape = Sphere::builder().build_trait();
         let i = Intersection::new(1.0, shape.to_trait_ref());
-        let comps = ray.prep_comps(&i).unwrap();
+        let comps = ray.prep_comp(&i, &vec![&i]).unwrap();
 
         assert_eq!(comps.point, point(0.0, 0.0, 1.0));
         assert_eq!(comps.eye_v, vector(0.0, 0.0, -1.0));
@@ -424,10 +435,47 @@ mod tests {
             vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
         let i = Intersection::new(2.0_f64.sqrt(), shape.to_trait_ref());
-        let comps = ray.prep_comps(&i).unwrap();
+        let comps = ray.prep_comp(&i, &vec![&i]).unwrap();
         assert_eq!(
             comps.reflect_v,
             vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
         );
+    }
+
+    #[test]
+    fn finding_n1_and_n1_at_various_intersections() {
+        let a = glass_sphere(Matrix::scaling(2.0, 2.0, 2.0), 1.5);
+        let b = glass_sphere(Matrix::translation(0.0, 0.0, -0.25), 2.0);
+        let c = glass_sphere(Matrix::translation(0.0, 0.0, 0.25), 2.5);
+
+        let ray = Ray::new(point(0.0, 0.0, -4.0), vector(0.0, 0.0, 1.0));
+        let intersections: Vec<Intersection> = vec![
+            Intersection::new(2.0, a.to_trait_ref()),
+            Intersection::new(2.75, b.to_trait_ref()),
+            Intersection::new(3.25, c.to_trait_ref()),
+            Intersection::new(4.75, b.to_trait_ref()),
+            Intersection::new(5.25, c.to_trait_ref()),
+            Intersection::new(6.0, a.to_trait_ref()),
+        ];
+
+        let i_ref: Vec<&Intersection> = intersections.iter().collect();
+        let xs = intersections
+            .iter()
+            .map(|i| ray.prep_comp(i, &i_ref))
+            .filter_map(|x| x);
+
+        let expected = vec![
+            (1.0, 1.5),
+            (1.5, 2.0),
+            (2.0, 2.5),
+            (2.5, 2.5),
+            (2.5, 1.5),
+            (1.5, 1.0),
+        ];
+
+        xs.zip(expected).for_each(|val| {
+            assert_eq!(val.0.n1, val.1 .0);
+            assert_eq!(val.0.n2, val.1 .1)
+        });
     }
 }
